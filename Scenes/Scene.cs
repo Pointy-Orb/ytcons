@@ -83,13 +83,13 @@ public class Scene
 
     internal void CheckKeys(ConsoleKeyInfo key)
     {
-        OnCheckKeys(key);
+        if (!OnCheckKeys(key)) return;
         if (menus.TryPeek(out var result))
         {
             result.CheckKeys(key.Key);
         }
     }
 
-    internal virtual void OnCheckKeys(ConsoleKeyInfo key)
-    { }
+    internal virtual bool OnCheckKeys(ConsoleKeyInfo key)
+    { return true; }
 }

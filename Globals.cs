@@ -1,4 +1,6 @@
 using YTCons.Scenes;
+using System.Runtime.InteropServices;
+using static System.Environment;
 
 namespace YTCons;
 
@@ -12,6 +14,26 @@ public enum AnchorType
 
 public static class Globals
 {
+    internal static string configDir
+    {
+        get
+        {
+            var config = Path.Combine(GetFolderPath(SpecialFolder.ApplicationData, SpecialFolderOption.DoNotVerify), "ytcons");
+            Directory.CreateDirectory(config);
+            return config;
+        }
+    }
+
+    internal static string localDir
+    {
+        get
+        {
+            var local = Path.Combine(GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify), "ytcons");
+            Directory.CreateDirectory(local);
+            return local;
+        }
+    }
+
     internal static Stack<Scene> scenes = new();
 
     internal static Scene activeScene => scenes.Peek();

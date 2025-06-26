@@ -39,6 +39,7 @@ public class ChooseResolution : MenuBlock
         {
             inactiveBecausePlaying = false;
             Reset();
+            Console.Clear();
         }
     }
 }

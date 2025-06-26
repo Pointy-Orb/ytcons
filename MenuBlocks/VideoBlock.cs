@@ -137,13 +137,19 @@ public class VideoBlock : MenuBlock
             {
                 imageViewer.StartInfo = new ProcessStartInfo
                 {
-                    FileName = "/usr/bin/open",
+                    FileName = "/usr/bin/chafa",
                     Arguments = thumbnailPath
                 };
             }
             imageViewer.StartInfo.RedirectStandardInput = true;
             imageViewer.StartInfo.RedirectStandardError = true;
             imageViewer.Start();
+            var key = Console.ReadKey();
+            while (key.Key != ConsoleKey.Enter && key.Key != ConsoleKey.Spacebar && key.Key != ConsoleKey.Q)
+            {
+                key = Console.ReadKey();
+            }
+            Console.Clear();
         }
         catch
         {
@@ -167,11 +173,13 @@ public class VideoBlock : MenuBlock
         {
             activeBecause = InactiveReason.Active;
             Reset();
+            Console.Clear();
         }
         if (activeBecause == InactiveReason.Playing && videoInfo.mediaPlayer.HasExited)
         {
             activeBecause = InactiveReason.Active;
             Reset();
+            Console.Clear();
         }
         if (activeBecause == InactiveReason.ShowingThumbnail)
         {
@@ -184,17 +192,6 @@ public class VideoBlock : MenuBlock
 
     protected override void PostDraw()
     {
-        if (activeBecause == InactiveReason.Playing)
-        {
-            Globals.Write(0, Console.WindowHeight - 1, videoInfo.mediaPlayer.StandardError.ReadLine());
-        }
-        else
-        {
-            for (int i = 0; i < Console.WindowWidth; i++)
-            {
-                Globals.Write(i, Console.WindowHeight - 1, Convert.ToChar(" "));
-            }
-        }
         if (!videoInfo.windowOpen) return;
         int descriptionCharacter = 0;
         int extraDescChar = 0;
@@ -452,10 +449,11 @@ public class VideoBlock : MenuBlock
         {
             videoInfo.mediaPlayer.Kill();
         }
-        if (key == ConsoleKey.Backspace && activeBecause == InactiveReason.Playing)
+        if (key == ConsoleKey.OemPlus && activeBecause == InactiveReason.Playing)
         {
             activeBecause = InactiveReason.Active;
             Reset();
+            Console.Clear();
         }
         if (!videoInfo.windowOpen) return;
         if (key == ConsoleKey.Q)

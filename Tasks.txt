@@ -1,12 +1,10 @@
 TODO:
 Make search function work
-Add other stats to description window (likes, subscribers, etc.)
-Make description window draw properly when the menu option is too long
 Make description window able to page when description is too long
 Make playlist feature
 Allow viewing of channel pages
 Integrate RSS feed
-Dynamically parse piped instances
+Add support for subtitles
 
 DOING:
 
