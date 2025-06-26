@@ -1,0 +1,4 @@
+.globalseddirs
+bin/
+obj/
+a.out
