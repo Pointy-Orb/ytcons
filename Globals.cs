@@ -40,6 +40,16 @@ public static class Globals
         }
     }
 
+    internal static string playlistDir
+    {
+        get
+        {
+            var playlist = Path.Combine(configDir, "playlists");
+            Directory.CreateDirectory(playlist);
+            return playlist;
+        }
+    }
+
     internal static Stack<Scene> scenes = new();
 
     internal static Scene activeScene => scenes.Peek();
@@ -52,15 +62,15 @@ public static class Globals
     {
         debug = args.Contains("--debug");
         noCheckStream = args.Contains("--no-check-stream");
-        await ExtractedVideoInfo.GetSites();
-        var sceneTask = TestScene.CreateAsync();
         LoadBar.loadMessage = "Getting available sites";
+        LoadBar.visible = true;
+        await ExtractedVideoInfo.GetSites();
+        LoadBar.visible = false;
         Console.ResetColor();
         defaultForeground = Console.ForegroundColor;
         defaultBackground = Console.BackgroundColor;
-        var scene = await sceneTask;
+        var scene = new RootScene();
         scenes.Push(scene);
-        await scene.DoSearch();
     }
 
     internal static int oldWindowWidth = Console.WindowWidth;
@@ -79,7 +89,7 @@ public static class Globals
     {
         Console.CursorVisible = true;
         var value = ReadLineInner(i, j, prompt);
-        while (value == null)
+        while (value == null || value == "")
         {
             value = ReadLineInner(i, j, prompt);
         }
@@ -92,6 +102,11 @@ public static class Globals
         Console.SetCursorPosition(i, j);
         Console.Write(prompt);
         var input = Console.ReadLine();
+        Console.SetCursorPosition(i, j);
+        for (int l = 0; l < prompt.Length + (input == null ? 0 : input.Length); l++)
+        {
+            Console.Write(" ");
+        }
         return input;
     }
 
@@ -107,22 +122,22 @@ public static class Globals
         await activeScene.Update();
         if (Console.KeyAvailable)
         {
-            CheckKeys();
+            await CheckKeys();
         }
     }
 
-    internal static void CheckKeys()
+    internal static async Task CheckKeys()
     {
         var key = Console.ReadKey(true);
-        activeScene.CheckKeys(key);
+        await activeScene.CheckKeys(key);
         if (key.Key == ConsoleKey.Escape)
         {
             Globals.Exit(0);
         }
     }
 
-    public static ConsoleColor? defaultForeground;
-    public static ConsoleColor? defaultBackground;
+    public static ConsoleColor defaultForeground;
+    public static ConsoleColor defaultBackground;
 
     private static ConsoleColor?[,] foregroundColor = new ConsoleColor?[Console.WindowWidth, Console.WindowHeight];
     private static ConsoleColor?[,] backgroundColor = new ConsoleColor?[Console.WindowWidth, Console.WindowHeight];
@@ -133,8 +148,9 @@ public static class Globals
 
     internal static void Draw()
     {
-        //Calling this at the beginning means that the default color can be referenced with Console.ForegroundColor and Console.BackgroundColor
         Console.ResetColor();
+        if (defaultForeground != Console.ForegroundColor) defaultForeground = Console.ForegroundColor;
+        if (defaultBackground != Console.BackgroundColor) defaultBackground = Console.BackgroundColor;
         if (Console.WindowWidth != oldWindowWidth || Console.WindowHeight != oldWindowHeight)
         {
             buffer = new char[Console.WindowWidth, Console.WindowHeight];
@@ -306,6 +322,14 @@ public static class Globals
         {
 
         }
-        oldChang.Add((i, j));
+        if (!oldChang.Contains((i, j)))
+        {
+            oldChang.Add((i, j));
+        }
+    }
+
+    internal static string BeautifyPlaylistName(string path)
+    {
+        return Path.GetFileNameWithoutExtension(path).Replace("_", " ");
     }
 }

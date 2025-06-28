@@ -4,7 +4,7 @@ namespace YTCons.Scenes;
 
 public class Scene
 {
-    protected Stack<MenuBlock> menus = new();
+    public Stack<MenuBlock> menus = new();
     internal bool[,] protectedTile = new bool[Console.WindowWidth, Console.WindowHeight];
 
     int prevMenuCount = 0;
@@ -29,7 +29,7 @@ public class Scene
         prevMenuCount = menus.Count;
     }
 
-    public virtual void OnUpdate()
+    protected virtual void OnUpdate()
     {
     }
 
@@ -114,7 +114,7 @@ public class Scene
         if (!await overrider) return;
         if (menus.TryPeek(out var result))
         {
-            result.CheckKeys(key.Key);
+            await result.CheckKeys(key.Key);
         }
     }
 

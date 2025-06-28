@@ -150,9 +150,9 @@ public class ExtractedVideoInfo
 
     async Task Init()
     {
-        LoadBar.loadMessage = "Starting process";
+        LoadBar.loadMessageDebug = "Starting process";
         video = await Main(id);
-        LoadBar.loadMessage = "Converting subtitles";
+        LoadBar.loadMessageDebug = "Converting subtitles";
         gotVideo = true;
         await ConvertSubs();
     }
@@ -225,7 +225,7 @@ public class ExtractedVideoInfo
 
     async Task<string?> GetJsonInner(Uri url, CancellationToken cancellationToken, string site)
     {
-        LoadBar.loadMessage = "Finding valid API";
+        LoadBar.loadMessageDebug = "Finding valid API";
         var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var combinedCancel = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, cancellationToken);
         HttpResponseMessage response;
@@ -260,7 +260,7 @@ public class ExtractedVideoInfo
             Console.SetCursorPosition(0, sites.IndexOf(site));
             Console.Write($"{site}: successfully got data");
         }
-        LoadBar.loadMessage = "Getting raw data";
+        LoadBar.loadMessageDebug = "Getting raw data";
         var str = await response.Content.ReadAsStringAsync(combinedCancel.Token);
         return str;
     }
@@ -284,7 +284,7 @@ public class ExtractedVideoInfo
         }
         try
         {
-            LoadBar.loadMessage = "Parsing data";
+            LoadBar.loadMessageDebug = "Parsing data";
             value = JsonConvert.DeserializeObject<Video>(json);
         }
         catch (Exception ex)
@@ -297,7 +297,7 @@ public class ExtractedVideoInfo
         {
             return (false, new Video());
         }
-        LoadBar.loadMessage = "Checking video streams";
+        LoadBar.loadMessageDebug = "Checking video streams";
         foreach (VideoStream stream in value.videoStreams)
         {
             if (ValidateStream(stream))
@@ -361,7 +361,7 @@ public class ExtractedVideoInfo
             tasks.Remove(fin);
             if (maybe != null)
             {
-                LoadBar.loadMessage = "Converting to usable format";
+                LoadBar.loadMessageDebug = "Converting to usable format";
                 json = maybe;
             }
             else
@@ -370,7 +370,7 @@ public class ExtractedVideoInfo
             }
             try
             {
-                LoadBar.loadMessage = "Parsing data";
+                LoadBar.loadMessageDebug = "Parsing data";
                 tempVideo = JsonConvert.DeserializeObject<Video>(json);
             }
             catch (Exception ex)
@@ -378,7 +378,7 @@ public class ExtractedVideoInfo
                 Console.WriteLine("Exception: " + ex.Message);
                 throw;
             }
-            LoadBar.loadMessage = "Checking video streams";
+            LoadBar.loadMessageDebug = "Checking video streams";
             foreach (VideoStream stream in tempVideo.videoStreams)
             {
                 if (await ValidateStreamAsync(stream))

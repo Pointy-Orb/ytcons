@@ -36,7 +36,14 @@ public class MenuBlock
             for (int j = 0; j < Console.WindowHeight; j++)
             {
                 var pos = j - drawOffset;
-                pos -= (Console.WindowHeight - options.Count - 1);
+                if (anchorType == AnchorType.Cursor && cursorAnchorPos != null)
+                {
+                    pos += (int)cursorAnchorPos;
+                }
+                else
+                {
+                    pos -= (Console.WindowHeight - options.Count - 1);
+                }
                 if (pos >= 0 && pos < options.Count && options[pos].selected)
                 {
                     return (options[pos].drawEnd, j);
@@ -107,7 +114,7 @@ public class MenuBlock
         return true;
     }
 
-
+    private int? cursorAnchorPos = null;
 
     public void Draw(int prevMenuOffset, out int nextMenuOffset, int? prevDrawCursor, out int? drawCursor)
     {
@@ -116,10 +123,11 @@ public class MenuBlock
         drawCursor = null;
         if (!draw || !PreDraw()) return;
         int i = prevMenuOffset;
+        bool overrideAnchor = options.Count() > winHeight;
         for (int j = Console.WindowTop; j < winHeight - 1; j++)
         {
             var pos = j - drawOffset;
-            if (anchorType == AnchorType.Center || (anchorType == AnchorType.Cursor && prevDrawCursor == null))
+            if (anchorType == AnchorType.Center || ((anchorType == AnchorType.Cursor || overrideAnchor) && prevDrawCursor == null))
             {
                 pos -= winHeight / 2;
                 pos += options.Count / 2;
@@ -128,8 +136,9 @@ public class MenuBlock
             {
                 pos += cursor;
                 pos -= (int)prevDrawCursor;
+                cursorAnchorPos = cursor - (int)prevDrawCursor;
             }
-            if (anchorType == AnchorType.Bottom)
+            if (anchorType == AnchorType.Bottom && !overrideAnchor)
             {
                 pos -= (winHeight - options.Count - 1);
             }
@@ -180,7 +189,7 @@ public class MenuBlock
 
     public async Task CheckKeys(ConsoleKey key)
     {
-        OnCheckKeys(key);
+        await OnCheckKeys(key);
         if (!active) return;
         if (!confirmed)
         {

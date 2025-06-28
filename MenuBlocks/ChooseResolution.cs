@@ -27,9 +27,8 @@ public class ChooseResolution : MenuBlock
 
     private async Task Play(string resolution)
     {
-        Console.Clear();
         active = false;
-        info.Play(chosenFormat, resolution);
+        await info.Play(chosenFormat, resolution);
         inactiveBecausePlaying = true;
     }
 

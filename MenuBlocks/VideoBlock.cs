@@ -10,13 +10,14 @@ public class VideoBlock : MenuBlock
     public readonly string videoID;
     public string extraData = "";
     public ExtractedVideoInfo videoInfo = ExtractedVideoInfo.Empty;
-    private Task gettingThumbnail;
+    private Task gettingThumbnail = new Task(() => { });
     private enum InactiveReason
     {
         Active,
         ShowingDeets,
         Playing,
-        ShowingThumbnail
+        ShowingThumbnail,
+        Playlisting
     }
     private InactiveReason activeBecause;
     string thumbnailPath = "";
@@ -40,9 +41,9 @@ public class VideoBlock : MenuBlock
         videoID = id;
     }
 
-    public VideoBlock(ExtractedVideoInfo info, string id, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
+    public VideoBlock(ExtractedVideoInfo info, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
     {
-        videoID = id;
+        videoID = info.id;
         videoInfo = info;
         thumbnailPath = Path.GetTempPath() + videoID + ".webp";
         extraData = MakeExtraData();
@@ -73,19 +74,20 @@ public class VideoBlock : MenuBlock
     private string MakeExtraData()
     {
         StringBuilder extraDataBuilder = new("👁 Views: ");
-        extraDataBuilder.Append(videoInfo.video.views.ToString("N0") + "  |  👍 Likes: ");
+        extraDataBuilder.Append(videoInfo.video.views.ToString("N0") + "  │  👍 Likes: ");
         extraDataBuilder.Append(videoInfo.video.likes.ToString("N0") + $"  {Ratio(videoInfo.video.likes, videoInfo.video.dislikes)}  👎 Dislikes: ");
         extraDataBuilder.Append(videoInfo.video.dislikes.ToString("N0"));
-        extraDataBuilder.Append("  |📺 Channel: " + (videoInfo.video.uploaderVerified ? "✔️" : "") + videoInfo.video.uploader);
+        extraDataBuilder.Append("  │📺 Channel: " + (videoInfo.video.uploaderVerified ? "✔️" : "") + videoInfo.video.uploader);
         extraDataBuilder.Append($" (目 Subs: {videoInfo.video.uploaderSubscriberCount.ToString("N0")})");
-        extraDataBuilder.Append($"  | 𐁗  Uploaded on {videoInfo.video.uploadDate.ToString()}");
-        extraDataBuilder.Append("  | 🕓 Duration: " + videoInfo.ParsedDuration());
+        extraDataBuilder.Append($"  │ 𐁗  Uploaded on {videoInfo.video.uploadDate.ToString()}");
+        extraDataBuilder.Append("  │ 🕓 Duration: " + videoInfo.ParsedDuration());
         return extraDataBuilder.ToString();
     }
 
     private char[] FinishConstructor()
     {
         options.Add(new MenuOption("Play", this, () => PlayAsync(), () => Globals.activeScene.PushMenuAsync(new ChooseFormat(videoInfo))));
+        options.Add(new MenuOption("Add To Playlist", this, () => Task.Run(() => Globals.activeScene.PushMenu(new AddToPlaylist(videoInfo)))));
         options.Add(new MenuOption("Show Description", this, () => Task.Run(() =>
         {
             active = false;
@@ -149,6 +151,7 @@ public class VideoBlock : MenuBlock
             else
             {
                 var process = File.Exists("/usr/bin/chafa") ? "/usr/bin/chafa" : "/usr/bin/open";
+                Console.SetCursorPosition(Console.WindowWidth / 2, 0);
                 imageViewer.StartInfo = new ProcessStartInfo
                 {
                     FileName = process,
@@ -277,7 +280,7 @@ public class VideoBlock : MenuBlock
                 if (InExtraWindow(i, j) && extraDescChar < extraData.Length)
                 {
                     Globals.Write(i, j, extraData[extraDescChar]);
-                    Globals.SetForegroundColor(i, j, Console.ForegroundColor);
+                    Globals.SetForegroundColor(i, j, Globals.defaultForeground);
                     extraDescChar++;
                 }
                 if (!InWindow(i, j)) continue;
@@ -341,7 +344,7 @@ public class VideoBlock : MenuBlock
                 }
                 else
                 {
-                    Globals.SetForegroundColor(i, j, Console.ForegroundColor);
+                    Globals.SetForegroundColor(i, j, Globals.defaultForeground);
                 }
                 if (background != null)
                 {
@@ -430,16 +433,28 @@ public class VideoBlock : MenuBlock
             heightMult++;
         }
         if (j < Console.WindowHeight / 6 - heightMult - 1 || j >= Console.WindowHeight / 6) return false;
+        if (j == Console.WindowHeight / 6 - heightMult - 1 && i == Console.WindowWidth / 6)
+        {
+            Globals.Write(i, j, Convert.ToChar("┌"));
+            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
+            return false;
+        }
+        if (j == Console.WindowHeight / 6 - heightMult - 1 && i == (int)((float)Console.WindowWidth * (5f / 6f)))
+        {
+            Globals.Write(i, j, Convert.ToChar("┐"));
+            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
+            return false;
+        }
         if (i == (int)((float)Console.WindowWidth * (5f / 6f)) || i == Console.WindowWidth / 6)
         {
-            Globals.Write(i, j, "| ");
-            Globals.SetForegroundColor(i, j, Console.ForegroundColor);
+            Globals.Write(i, j, "│ ");
+            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
             return false;
         }
         if (j == Console.WindowHeight / 6 - heightMult - 1)
         {
-            Globals.Write(i, j, Convert.ToChar("—"));
-            Globals.SetForegroundColor(i, j, Console.ForegroundColor);
+            Globals.Write(i, j, Convert.ToChar("─"));
+            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
             return false;
         }
         return true;
@@ -447,25 +462,41 @@ public class VideoBlock : MenuBlock
 
     private bool InWindow(int i, int j)
     {
-        if ((float)i > (float)Console.WindowWidth * (5f / 6f) || (float)j > (float)Console.WindowHeight * (5f / 6f) + 1) return false;
+        if ((float)i > (float)Console.WindowWidth * (5f / 6f) || (float)j > (float)Console.WindowHeight * (5f / 6f) + 2) return false;
         if (i < Console.WindowWidth / 6 || j < Console.WindowHeight / 6) return false;
         try
         {
             Globals.activeScene.protectedTile[i, j] = true;
         }
         catch { }
-        if (i == (int)((float)Console.WindowWidth * (5f / 6f)) || i == Console.WindowWidth / 6)
+        //Bottom left corner
+        if (j == (int)((float)Console.WindowHeight * (5f / 6f)) + 2 && i == Console.WindowWidth / 6)
         {
-            Globals.SetForegroundColor(i, j, Console.ForegroundColor);
-            Globals.Write(i, j, "| ");
+            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
+            Globals.Write(i, j, "└");
             return false;
         }
+        //Bottom right corner
+        if (j == (int)((float)Console.WindowHeight * (5f / 6f)) + 2 && i == (int)((float)Console.WindowWidth * (5f / 6f)))
+        {
+            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
+            Globals.Write(i, j, "┘");
+            return false;
+        }
+        //Left and right edges
+        if (i == (int)((float)Console.WindowWidth * (5f / 6f)) || i == Console.WindowWidth / 6)
+        {
+            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
+            Globals.Write(i, j, "│ ");
+            return false;
+        }
+        //Tip
         if (j == (int)((float)Console.WindowHeight * (5f / 6f) + 1) && i == Console.WindowWidth / 6 + 1)
         {
             Globals.Write(i, j, "Close window with \"q\".", out var newPos);
             if (linkNumber > 0)
             {
-                Globals.Write(newPos, j, " Select and open links with ⬅, ➡, and Space.");
+                Globals.Write(newPos, j, ". Select and open links with ⬅, ➡, and Space.");
             }
             return false;
         }
@@ -473,10 +504,10 @@ public class VideoBlock : MenuBlock
         {
             return false;
         }
-        if (j == Console.WindowHeight / 6 || j == (int)((float)Console.WindowHeight * (5f / 6f)))
+        if (j == Console.WindowHeight / 6 || j == (int)((float)Console.WindowHeight * (5f / 6f)) || j == (int)((float)Console.WindowHeight * (5f / 6f)) + 2)
         {
-            Globals.Write(i, j, Convert.ToChar("—"));
-            Globals.SetForegroundColor(i, j, Console.ForegroundColor);
+            Globals.Write(i, j, Convert.ToChar("─"));
+            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
             return false;
         }
         windowWidth = (int)((float)Console.WindowWidth * (5f / 6f)) - (Console.WindowWidth / 6);

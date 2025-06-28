@@ -19,6 +19,8 @@ public class MenuOption
 
     public MenuBlock parent;
 
+    public MenuBlock? childMenu;
+
     public int drawEnd { get; private set; }
 
     public MenuOption(string option, MenuBlock parent, Func<Task> onSelected, Func<Task>? altOnSelected = null)
@@ -27,6 +29,15 @@ public class MenuOption
         this.parent = parent;
         this._onSelected = onSelected;
         this._altOnSelected = altOnSelected;
+    }
+
+    public MenuOption(string option, MenuBlock parent, Func<Task> onSelected, MenuBlock childMenu, Func<Task>? altOnSelected = null)
+    {
+        this.option = option;
+        this.parent = parent;
+        this._onSelected = onSelected;
+        this._altOnSelected = altOnSelected;
+        this.childMenu = childMenu;
     }
 
     public async Task OnSelected()
@@ -94,7 +105,7 @@ public class MenuOption
                 {
                     for (int i = drawX; i < input.Length + drawX; i++)
                     {
-                        Globals.SetForegroundColor(i, drawY, Console.ForegroundColor);
+                        Globals.SetForegroundColor(i, drawY, Globals.defaultForeground);
                     }
                 }
                 Globals.Write(drawX, drawY, input, out newX);
@@ -113,7 +124,7 @@ public class MenuOption
             {
                 for (int i = drawX; i < input.Length + drawX; i++)
                 {
-                    Globals.SetForegroundColor(i, drawY, Console.ForegroundColor);
+                    Globals.SetForegroundColor(i, drawY, Globals.defaultForeground);
                 }
             }
             Globals.Write(drawX, drawY, input, out newX);

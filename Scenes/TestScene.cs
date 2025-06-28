@@ -22,7 +22,7 @@ public class TestScene : Scene
         Console.WriteLine("pushing the query");
     }
 
-    public override void OnUpdate()
+    protected override void OnUpdate()
     {
         Console.WriteLine("you came back, how was it");
         var query = Globals.ReadLine(0, Console.WindowHeight, "");
