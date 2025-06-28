@@ -4,18 +4,19 @@ namespace YTCons.Scenes;
 
 public class DescriptionVideo : Scene
 {
-    public DescriptionVideo(string id)
+    public static async Task<DescriptionVideo> CreateAsync(string id)
     {
-        var info = new ExtractedVideoInfo(id);
-        while (!info.gotVideo)
-        {
-            LoadBar.WriteLoad();
-        }
-        LoadBar.ClearLoad();
+        var instance = new DescriptionVideo(id);
+        var info = await ExtractedVideoInfo.CreateAsync(id);
         MenuBlock block = new();
-        block.options.Add(new MenuOption(info.video.title, block, () => menus.Push(new VideoBlock(info, id))));
-        block.options.Add(new MenuOption("Back", block, () => Globals.scenes.Pop()));
+        block.options.Add(new MenuOption(info.video.title, block, () => Globals.activeScene.PushMenuAsync(new VideoBlock(info, id))));
+        block.options.Add(new MenuOption("Back", block, () => Task.Run(() => Globals.scenes.Pop())));
         block.options[block.cursor].selected = true;
-        PushMenu(block);
+        instance.PushMenu(block);
+        return instance;
+    }
+
+    private DescriptionVideo(string id)
+    {
     }
 }

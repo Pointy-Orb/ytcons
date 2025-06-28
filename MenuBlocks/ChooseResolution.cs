@@ -25,7 +25,7 @@ public class ChooseResolution : MenuBlock
         options[cursor].selected = true;
     }
 
-    private void Play(string resolution)
+    private async Task Play(string resolution)
     {
         Console.Clear();
         active = false;

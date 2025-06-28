@@ -1,6 +1,6 @@
 TODO:
 Make search function work
-Make description window able to page when description is too long
+Iron out kinks with paged description
 Make playlist feature
 Allow viewing of channel pages
 Integrate RSS feed

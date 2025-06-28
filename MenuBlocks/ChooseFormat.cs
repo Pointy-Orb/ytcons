@@ -14,7 +14,7 @@ public class ChooseFormat : MenuBlock
         }
         foreach (string format in formats)
         {
-            options.Add(new MenuOption(format, this, () => Globals.activeScene.PushMenu(new ChooseResolution(videoInfo, format))));
+            options.Add(new MenuOption(format, this, () => Globals.activeScene.PushMenuAsync(new ChooseResolution(videoInfo, format))));
         }
         options[cursor].selected = true;
     }

@@ -8,6 +8,7 @@ public class MenuBlock
     public AnchorType anchorType;
     public bool active { get; protected set; }
     private bool draw = false;
+    public bool grayUnselected { get; set; }
 
     private int prevWindowHeight = 0;
 
@@ -28,6 +29,32 @@ public class MenuBlock
 
     public List<MenuOption> options = new List<MenuOption>();
 
+    public (int x, int y) selectedDrawPos
+    {
+        get
+        {
+            for (int j = 0; j < Console.WindowHeight; j++)
+            {
+                var pos = j - drawOffset;
+                pos -= (Console.WindowHeight - options.Count - 1);
+                if (pos >= 0 && pos < options.Count && options[pos].selected)
+                {
+                    return (options[pos].drawEnd, j);
+                }
+            }
+            return (0, 0);
+        }
+    }
+
+    public void ChangeWindowSize()
+    {
+        OnChangeWindowSize();
+    }
+
+    protected virtual void OnChangeWindowSize()
+    {
+    }
+
     public void Reset()
     {
         active = true;
@@ -43,7 +70,7 @@ public class MenuBlock
         prevWindowHeight = Console.WindowHeight;
     }
 
-    public void Update()
+    public async Task Update()
     {
         OnUpdate();
         if (!active)
@@ -54,13 +81,13 @@ public class MenuBlock
         if (confirmed)
         {
             selectedOption = options[cursor];
-            if (altConfirmed && selectedOption.altOnSelected != null)
+            if (altConfirmed && selectedOption.HasAltSelect)
             {
-                selectedOption.altOnSelected.Invoke();
+                await selectedOption.AltOnSelected();
             }
             else
             {
-                selectedOption.onSelected.Invoke();
+                await selectedOption.OnSelected();
             }
             active = false;
         }
@@ -82,24 +109,25 @@ public class MenuBlock
 
 
 
-    public void Draw(int prevMenuOffset, out int nextMenuOffset, int prevDrawCursor, out int? drawCursor)
+    public void Draw(int prevMenuOffset, out int nextMenuOffset, int? prevDrawCursor, out int? drawCursor)
     {
         var winHeight = Console.WindowHeight;
         nextMenuOffset = prevMenuOffset;
-        drawCursor = prevDrawCursor;
+        drawCursor = null;
         if (!draw || !PreDraw()) return;
         int i = prevMenuOffset;
         for (int j = Console.WindowTop; j < winHeight - 1; j++)
         {
             var pos = j - drawOffset;
-            if (anchorType == AnchorType.Center || (anchorType == AnchorType.Cursor))
+            if (anchorType == AnchorType.Center || (anchorType == AnchorType.Cursor && prevDrawCursor == null))
             {
                 pos -= winHeight / 2;
                 pos += options.Count / 2;
             }
-            if (anchorType == AnchorType.Cursor)
+            if (anchorType == AnchorType.Cursor && prevDrawCursor != null)
             {
                 pos += cursor;
+                pos -= (int)prevDrawCursor;
             }
             if (anchorType == AnchorType.Bottom)
             {
@@ -108,7 +136,11 @@ public class MenuBlock
             if (pos < options.Count && pos >= 0)
             {
                 options[pos].Draw(i, j, prevMenuOffset, out var testChildCursorOffset);
-                if (nextMenuOffset < testChildCursorOffset)
+                if (nextMenuOffset < testChildCursorOffset && (!grayUnselected || !confirmed))
+                {
+                    nextMenuOffset = testChildCursorOffset;
+                }
+                if (grayUnselected && options[pos].selected && confirmed)
                 {
                     nextMenuOffset = testChildCursorOffset;
                 }
@@ -117,17 +149,19 @@ public class MenuBlock
                     drawCursor = j;
                 }
             }
+            /*
             else
             {
-                for (int l = Console.CursorLeft; l < nextMenuOffset; l++)
+                for (int l = prevMenuOffset; l < nextMenuOffset; l++)
                 {
                     if (j >= Globals.activeScene.protectedTile.GetLength(1) || l >= Globals.activeScene.protectedTile.GetLength(0)) continue;
                     if (!Globals.activeScene.protectedTile[l, j])
                     {
-                        Globals.ClearTile(i, j);
+                        Globals.ClearTile(l, j);
                     }
                 }
             }
+			*/
         }
         if (Globals.activeScene.protectedTile.GetLength(0) != Console.WindowWidth || Globals.activeScene.protectedTile.GetLength(1) != winHeight)
         {
@@ -144,7 +178,7 @@ public class MenuBlock
     {
     }
 
-    public void CheckKeys(ConsoleKey key)
+    public async Task CheckKeys(ConsoleKey key)
     {
         OnCheckKeys(key);
         if (!active) return;
@@ -193,7 +227,7 @@ public class MenuBlock
         }
     }
 
-    protected virtual void OnCheckKeys(ConsoleKey key)
+    protected virtual async Task OnCheckKeys(ConsoleKey key)
     {
     }
 }

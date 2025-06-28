@@ -2,10 +2,10 @@
 
 public static class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         Console.CursorVisible = false;
-        Globals.Init(args);
+        await Globals.Init(args);
         if (!Globals.debug)
         {
             Console.Clear();
@@ -13,7 +13,7 @@ public static class Program
         while (true)
         {
             Globals.Draw();
-            Globals.Update();
+            await Globals.Update();
             Thread.Sleep(40);
         }
     }

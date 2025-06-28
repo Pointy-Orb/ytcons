@@ -19,10 +19,12 @@ public static class LoadBar
         ".   [••••••••••⬤•••]",
         "..  [•••••••••••⬤••]",
         "..  [••••••••••••⬤•]",
+        "..  [•••••••••••••⬤]",
+        "..  [••••••••••••⬤•]",
         "..  [•••••••••••⬤••]",
         "..  [••••••••••⬤•••]",
         "..  [•••••••••⬤••••]",
-        "..  [••••••••⬤•••••]",
+        "... [••••••••⬤•••••]",
         "... [•••••••⬤••••••]",
         "... [••••••⬤•••••••]",
         "... [•••••⬤••••••••]",
@@ -45,16 +47,16 @@ public static class LoadBar
         }
     }
 
+    public static bool visible = false;
+
     private static int curFrame = 0;
 
     private static string prevLoadMessage = "Loading";
 
     public static void WriteLoad()
     {
-        if (loadMessage != prevLoadMessage)
-        {
-            ClearLoad();
-        }
+        ClearLoad();
+        if (!visible) return;
         prevLoadMessage = loadMessage;
         Console.SetCursorPosition(0, Console.WindowHeight);
         Console.Write(loadMessage + frames[curFrame]);

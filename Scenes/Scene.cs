@@ -9,12 +9,18 @@ public class Scene
 
     int prevMenuCount = 0;
 
-    public void Update()
+    public void ChangeWindowSize()
+    {
+        PeekMenu().ChangeWindowSize();
+    }
+
+    public async Task Update()
     {
         OnUpdate();
+        LoadBar.WriteLoad();
         if (menus.TryPeek(out var result))
         {
-            result.Update();
+            await result.Update();
         }
         if (menus.Count > prevMenuCount)
         {
@@ -41,14 +47,7 @@ public class Scene
         int? prevCursor = null;
         foreach (var menu in menus.Reverse())
         {
-            if (prevCursor == null)
-            {
-                menu.Draw(prevMenuOffset, out prevMenuOffset, 0, out prevCursor);
-            }
-            else
-            {
-                menu.Draw(prevMenuOffset, out prevMenuOffset, 0, out _);
-            }
+            menu.Draw(prevMenuOffset, out prevMenuOffset, prevCursor, out prevCursor);
         }
         PostDraw();
     }
@@ -59,9 +58,37 @@ public class Scene
         menus.Peek().Reset();
     }
 
+    public async Task PushMenuAsync(MenuBlock menu)
+    {
+        menus.Push(menu);
+        menus.Peek().Reset();
+    }
+
     public MenuBlock PeekMenu()
     {
         return menus.Peek();
+    }
+
+    public async Task PopMenuAsync(bool forced = false)
+    {
+        if (menus.Count <= 1)
+        {
+            CloseRootMenu();
+            if (!forced)
+            {
+                return;
+            }
+        }
+        menus.Pop();
+        if (menus.TryPeek(out var menu))
+        {
+            menu.Reset();
+        }
+    }
+
+    protected virtual void CloseRootMenu()
+    {
+
     }
 
     public void PopMenu(bool forced = false)
@@ -81,15 +108,16 @@ public class Scene
     {
     }
 
-    internal void CheckKeys(ConsoleKeyInfo key)
+    internal async Task CheckKeys(ConsoleKeyInfo key)
     {
-        if (!OnCheckKeys(key)) return;
+        var overrider = OnCheckKeys(key);
+        if (!await overrider) return;
         if (menus.TryPeek(out var result))
         {
             result.CheckKeys(key.Key);
         }
     }
 
-    internal virtual bool OnCheckKeys(ConsoleKeyInfo key)
+    internal virtual async Task<bool> OnCheckKeys(ConsoleKeyInfo key)
     { return true; }
 }

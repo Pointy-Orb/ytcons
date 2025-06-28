@@ -1,5 +1,5 @@
 using YTCons.Scenes;
-using System.Runtime.InteropServices;
+using YTCons.UserExp;
 using static System.Environment;
 
 namespace YTCons;
@@ -30,6 +30,12 @@ public static class Globals
         {
             var local = Path.Combine(GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify), "ytcons");
             Directory.CreateDirectory(local);
+            var noobGuide = Path.Combine(local, "explainthisplz.txt");
+            if (!File.Exists(noobGuide))
+            {
+                //Write a file to the local directory that tells curious eyes what these variable are for.
+                File.WriteAllLines(noobGuide, ExplainStuff.LocalFiles);
+            }
             return local;
         }
     }
@@ -39,35 +45,66 @@ public static class Globals
     internal static Scene activeScene => scenes.Peek();
 
     public static bool debug = false;
+    //This flag is for debugging purposes and should not be set to true by the average user unless they like errors or are just that impatient
+    public static bool noCheckStream = false;
 
-    internal static void Init(string[] args)
+    internal static async Task Init(string[] args)
     {
         debug = args.Contains("--debug");
-        Task.Run(ExtractedVideoInfo.GetSites);
+        noCheckStream = args.Contains("--no-check-stream");
+        await ExtractedVideoInfo.GetSites();
+        var sceneTask = TestScene.CreateAsync();
         LoadBar.loadMessage = "Getting available sites";
-        while (!ExtractedVideoInfo.gotSites)
-        {
-            LoadBar.WriteLoad();
-        }
-        LoadBar.ClearLoad();
         Console.ResetColor();
         defaultForeground = Console.ForegroundColor;
         defaultBackground = Console.BackgroundColor;
-        scenes.Push(new TestScene());
+        var scene = await sceneTask;
+        scenes.Push(scene);
+        await scene.DoSearch();
     }
 
     internal static int oldWindowWidth = Console.WindowWidth;
     internal static int oldWindowHeight = Console.WindowHeight;
 
-    internal static void Update()
+    //Same as ReadLine but won't try again if null
+    internal static string? ReadLineNull(int i, int j, string prompt)
+    {
+        Console.CursorVisible = true;
+        var value = ReadLineInner(i, j, prompt);
+        Console.CursorVisible = false;
+        return value;
+    }
+
+    internal static string ReadLine(int i, int j, string prompt)
+    {
+        Console.CursorVisible = true;
+        var value = ReadLineInner(i, j, prompt);
+        while (value == null)
+        {
+            value = ReadLineInner(i, j, prompt);
+        }
+        Console.CursorVisible = false;
+        return value;
+    }
+
+    private static string? ReadLineInner(int i, int j, string prompt)
+    {
+        Console.SetCursorPosition(i, j);
+        Console.Write(prompt);
+        var input = Console.ReadLine();
+        return input;
+    }
+
+    internal static async Task Update()
     {
         if (oldWindowWidth != Console.WindowWidth || oldWindowHeight != Console.WindowHeight)
         {
             Console.Clear();
+            activeScene.ChangeWindowSize();
         }
         oldWindowWidth = Console.WindowWidth;
         oldWindowHeight = Console.WindowHeight;
-        activeScene.Update();
+        await activeScene.Update();
         if (Console.KeyAvailable)
         {
             CheckKeys();
@@ -96,6 +133,8 @@ public static class Globals
 
     internal static void Draw()
     {
+        //Calling this at the beginning means that the default color can be referenced with Console.ForegroundColor and Console.BackgroundColor
+        Console.ResetColor();
         if (Console.WindowWidth != oldWindowWidth || Console.WindowHeight != oldWindowHeight)
         {
             buffer = new char[Console.WindowWidth, Console.WindowHeight];
@@ -185,7 +224,10 @@ public static class Globals
             try
             {
                 buffer[i + l, j] = phrase[l];
-                chang.Add((i, j));
+                if (!chang.Contains((i + l, j)))
+                {
+                    chang.Add((i + l, j));
+                }
             }
             catch { }
         }
@@ -202,7 +244,10 @@ public static class Globals
             try
             {
                 buffer[i + l, j] = phrase[l];
-                chang.Add((i + l, j));
+                if (!chang.Contains((i + l, j)))
+                {
+                    chang.Add((i + l, j));
+                }
             }
             catch { }
             newPos = i + l;
@@ -214,7 +259,10 @@ public static class Globals
         try
         {
             buffer[i, j] = letter;
-            chang.Add((i, j));
+            if (!chang.Contains((i, j)))
+            {
+                chang.Add((i, j));
+            }
         }
         catch { }
     }
@@ -226,7 +274,10 @@ public static class Globals
             if (foregroundColor[i, j] != color)
             {
                 foregroundColor[i, j] = color;
-                chang.Add((i, j));
+                if (!chang.Contains((i, j)))
+                {
+                    chang.Add((i, j));
+                }
             }
         }
         catch { }
@@ -237,7 +288,10 @@ public static class Globals
         try
         {
             backgroundColor[i, j] = color;
-            chang.Add((i, j));
+            if (!chang.Contains((i, j)))
+            {
+                chang.Add((i, j));
+            }
         }
         catch { }
     }

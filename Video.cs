@@ -56,7 +56,7 @@ public class AudioStream
     public int width { get; set; }
     public int height { get; set; }
     public int fps { get; set; }
-    public int contentLength { get; set; }
+    public long contentLength { get; set; }
 }
 
 public class PreviewFrame
@@ -119,7 +119,7 @@ public class VideoStream
     public int width { get; set; }
     public int height { get; set; }
     public int fps { get; set; }
-    public int contentLength { get; set; }
+    public long contentLength { get; set; }
 }
 
 

@@ -6,20 +6,39 @@ public class MenuOption
 
     public bool selected = false;
 
+    public bool HasAltSelect
+    {
+        get { return _altOnSelected != null; }
+    }
+
     public string option;
 
-    public Action onSelected;
+    private Func<Task> _onSelected;
 
-    public Action? altOnSelected;
+    private Func<Task>? _altOnSelected;
 
     public MenuBlock parent;
 
-    public MenuOption(string option, MenuBlock parent, Action onSelected, Action? altOnSelected = null)
+    public int drawEnd { get; private set; }
+
+    public MenuOption(string option, MenuBlock parent, Func<Task> onSelected, Func<Task>? altOnSelected = null)
     {
         this.option = option;
         this.parent = parent;
-        this.onSelected = onSelected;
-        this.altOnSelected = altOnSelected;
+        this._onSelected = onSelected;
+        this._altOnSelected = altOnSelected;
+    }
+
+    public async Task OnSelected()
+    {
+        Task task = _onSelected();
+        await task;
+    }
+
+    public async Task AltOnSelected()
+    {
+        Task task = _altOnSelected();
+        await task;
     }
 
     public void Update()
@@ -64,13 +83,42 @@ public class MenuOption
         {
             if (!Globals.activeScene.protectedTile[drawX, drawY])
             {
+                if (!selected && parent.confirmed && parent.grayUnselected)
+                {
+                    for (int i = drawX; i < input.Length + drawX; i++)
+                    {
+                        Globals.SetForegroundColor(i, drawY, ConsoleColor.DarkGray);
+                    }
+                }
+                else if (!parent.grayUnselected)
+                {
+                    for (int i = drawX; i < input.Length + drawX; i++)
+                    {
+                        Globals.SetForegroundColor(i, drawY, Console.ForegroundColor);
+                    }
+                }
                 Globals.Write(drawX, drawY, input, out newX);
             }
         }
         catch
         {
+            if (!selected && parent.confirmed && parent.grayUnselected)
+            {
+                for (int i = drawX; i < input.Length + drawX; i++)
+                {
+                    Globals.SetForegroundColor(i, drawY, ConsoleColor.DarkGray);
+                }
+            }
+            else if (!parent.grayUnselected)
+            {
+                for (int i = drawX; i < input.Length + drawX; i++)
+                {
+                    Globals.SetForegroundColor(i, drawY, Console.ForegroundColor);
+                }
+            }
             Globals.Write(drawX, drawY, input, out newX);
         }
         newX += 1;
+        drawEnd = newX;
     }
 }

@@ -8,8 +8,9 @@ namespace YTCons.MenuBlocks;
 public class VideoBlock : MenuBlock
 {
     public readonly string videoID;
-    public readonly string extraData;
-    public readonly ExtractedVideoInfo videoInfo;
+    public string extraData = "";
+    public ExtractedVideoInfo videoInfo = ExtractedVideoInfo.Empty;
+    private Task gettingThumbnail;
     private enum InactiveReason
     {
         Active,
@@ -18,20 +19,25 @@ public class VideoBlock : MenuBlock
         ShowingThumbnail
     }
     private InactiveReason activeBecause;
-    string thumbnailPath;
-    char[] desc;
-    public VideoBlock(string id, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
+    string thumbnailPath = "";
+    char[] sourceDesc = new char[0];
+    bool paged = false;
+
+    public static async Task<VideoBlock> CreateAsync(string id)
+    {
+        var instance = new VideoBlock(id);
+        instance.videoInfo = await ExtractedVideoInfo.CreateAsync(id);
+        instance.thumbnailPath = Path.GetTempPath() + instance.videoID + ".webp";
+        instance.extraData = instance.MakeExtraData();
+        instance.sourceDesc = instance.FinishConstructor();
+        instance.ChangeWindowSize();
+        instance.gettingThumbnail = instance.ShowThumbnailInner();
+        return instance;
+    }
+
+    private VideoBlock(string id, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
     {
         videoID = id;
-        videoInfo = new ExtractedVideoInfo(id);
-        while (!videoInfo.gotVideo)
-        {
-            LoadBar.WriteLoad();
-        }
-        LoadBar.ClearLoad();
-        thumbnailPath = Path.GetTempPath() + videoID + ".webp";
-        extraData = MakeExtraData();
-        desc = FinishConstructor();
     }
 
     public VideoBlock(ExtractedVideoInfo info, string id, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
@@ -40,7 +46,9 @@ public class VideoBlock : MenuBlock
         videoInfo = info;
         thumbnailPath = Path.GetTempPath() + videoID + ".webp";
         extraData = MakeExtraData();
-        desc = FinishConstructor();
+        sourceDesc = FinishConstructor();
+        gettingThumbnail = ShowThumbnailInner();
+        ChangeWindowSize();
     }
 
     private string Ratio(int num1, int num2)
@@ -77,14 +85,14 @@ public class VideoBlock : MenuBlock
 
     private char[] FinishConstructor()
     {
-        options.Add(new MenuOption("Play", this, () => Play(), () => Globals.activeScene.PushMenu(new ChooseFormat(videoInfo))));
-        options.Add(new MenuOption("Show Description", this, () =>
+        options.Add(new MenuOption("Play", this, () => PlayAsync(), () => Globals.activeScene.PushMenuAsync(new ChooseFormat(videoInfo))));
+        options.Add(new MenuOption("Show Description", this, () => Task.Run(() =>
         {
             active = false;
             activeBecause = InactiveReason.ShowingDeets;
             videoInfo.windowOpen = true;
-        }));
-        options.Add(new MenuOption("Show Thumbnail", this, () =>
+        })));
+        options.Add(new MenuOption("Show Thumbnail", this, () => Task.Run(() =>
         {
             active = false;
             activeBecause = InactiveReason.ShowingThumbnail;
@@ -95,33 +103,38 @@ public class VideoBlock : MenuBlock
                 LoadBar.WriteLoad();
             }
             LoadBar.ClearLoad();
-        }));
+        })));
         options[cursor].selected = true;
         return ParseDescription(videoInfo.video.description).ToCharArray();
     }
 
-    private void Play()
+    private async Task PlayAsync()
     {
         active = false;
-        videoInfo.Play();
         activeBecause = InactiveReason.Playing;
+        await videoInfo.Play();
     }
 
     private Process imageViewer = new();
+
+    private async Task ShowThumbnailInner()
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            var thumbnailUrl = new Uri(videoInfo.video.thumbnailUrl);
+            byte[] thumbnailBytes = await client.GetByteArrayAsync(thumbnailUrl);
+            await File.WriteAllBytesAsync(thumbnailPath, thumbnailBytes);
+        }
+    }
 
     bool gotThumbnail = false;
     private async Task ShowThumbnail()
     {
         try
         {
-            if (!File.Exists(thumbnailPath))
+            if (!gettingThumbnail.IsCompleted)
             {
-                using (HttpClient client = new HttpClient())
-                {
-                    var thumbnailUrl = new Uri(videoInfo.video.thumbnailUrl);
-                    byte[] thumbnailBytes = await client.GetByteArrayAsync(thumbnailUrl);
-                    await File.WriteAllBytesAsync(thumbnailPath, thumbnailBytes);
-                }
+                await gettingThumbnail;
             }
             gotThumbnail = true;
             imageViewer = new();
@@ -135,9 +148,10 @@ public class VideoBlock : MenuBlock
             }
             else
             {
+                var process = File.Exists("/usr/bin/chafa") ? "/usr/bin/chafa" : "/usr/bin/open";
                 imageViewer.StartInfo = new ProcessStartInfo
                 {
-                    FileName = "/usr/bin/chafa",
+                    FileName = process,
                     Arguments = thumbnailPath
                 };
             }
@@ -190,43 +204,71 @@ public class VideoBlock : MenuBlock
 
     int pageOffset = 0;
 
+    static readonly char newline = Convert.ToChar("¤");
+
+    private bool CheckNeedsPage()
+    {
+        //Set the window width and height values if they aren't already
+        if (windowWidth == 0 || windowHeight == 0)
+        {
+            InWindow(0, 0);
+        }
+        int lines = 0;
+        int charsSinceNewline = 0;
+        for (int i = 0; i < sourceDesc.Length; i++)
+        {
+            charsSinceNewline++;
+            if (sourceDesc[i] == newline)
+            {
+                lines++;
+                charsSinceNewline = 0;
+            }
+            if (charsSinceNewline > windowWidth)
+            {
+                lines++;
+                charsSinceNewline = 0;
+            }
+        }
+        return lines > windowHeight;
+    }
+
+
+    protected override void OnChangeWindowSize()
+    {
+        paged = CheckNeedsPage();
+    }
+
     protected override void PostDraw()
     {
         if (!videoInfo.windowOpen) return;
         int descriptionCharacter = 0;
         int extraDescChar = 0;
         int linkIndex = 0;
-        bool blue = false;
         ConsoleColor? foreground = null;
         ConsoleColor? background = null;
-        var desc = this.desc;
-        if (pageDescription)
+        var desc = sourceDesc;
+        List<char> softDesc = desc.ToList();
+        if (paged)
         {
-            List<string> lines = new();
-            for (int i = 0; i < desc.Length / windowWidth; i++)
-            {
-                string line = "";
-                for (int j = i * windowWidth; j < (i + 1) * windowWidth; j++)
-                {
-                    line += desc[j];
-                }
-                lines.Add(line);
-            }
             for (int i = 0; i < pageOffset; i++)
             {
-                lines.RemoveAt(i);
+                if (softDesc.Count <= windowWidth)
+                {
+                    break;
+                }
+                for (int j = 0; j < windowWidth; j++)
+                {
+                    bool isNewline = softDesc[0] == newline;
+                    if (softDesc[0] == Convert.ToChar("⁒") || softDesc[0] == Convert.ToChar("▷"))
+                    {
+                        linkIndex++;
+                    }
+                    softDesc.RemoveAt(0);
+                    if (isNewline) break;
+                }
             }
-            if (lines.Count > windowHeight)
-            {
-                lines.RemoveAll(item => lines.IndexOf(item) > windowHeight);
-            }
-            string newDesc = "";
-            foreach (string line in lines)
-            {
-                newDesc += line;
-            }
-            desc = newDesc.ToCharArray();
         }
+        desc = softDesc.ToArray();
         for (int j = Console.WindowTop; j < Console.WindowHeight; j++)
         {
             bool newLining = false;
@@ -235,6 +277,7 @@ public class VideoBlock : MenuBlock
                 if (InExtraWindow(i, j) && extraDescChar < extraData.Length)
                 {
                     Globals.Write(i, j, extraData[extraDescChar]);
+                    Globals.SetForegroundColor(i, j, Console.ForegroundColor);
                     extraDescChar++;
                 }
                 if (!InWindow(i, j)) continue;
@@ -249,50 +292,56 @@ public class VideoBlock : MenuBlock
                     continue;
                 }
                 if (descriptionCharacter >= desc.Length) continue;
-                if (desc[descriptionCharacter] == Convert.ToChar("¤") && CheckNoEscape(descriptionCharacter, desc))
+                if (desc[descriptionCharacter] == newline && CheckNoEscape(descriptionCharacter, desc))
                 {
+                    Globals.Write(i, j, Convert.ToChar(" "));
                     descriptionCharacter++;
                     newLining = true;
                     continue;
                 }
                 if (desc[descriptionCharacter] == Convert.ToChar("⁒") || desc[descriptionCharacter] == Convert.ToChar("▷") && CheckNoEscape(descriptionCharacter, desc))
                 {
-                    blue = !blue;
                     var red = false;
-                    if (blue)
+                    linkIndex++;
+                    if (linkIndex == selectedLink)
                     {
-                        linkIndex++;
-                        if (linkIndex == selectedLink)
-                        {
-                            foreground = ConsoleColor.White;
-                            background = ConsoleColor.Blue;
-                            Globals.Write(i, j, Convert.ToChar("⇲"));
-                        }
-                        else
-                        {
-                            if (desc[descriptionCharacter] == Convert.ToChar("▷"))
-                            {
-                                foreground = ConsoleColor.Red;
-                                red = true;
-                            }
-                            else
-                            {
-                                foreground = ConsoleColor.Blue;
-                            }
-                            Globals.Write(i, j, Convert.ToChar(red ? "⏵" : "⇱"));
-                        }
+                        foreground = ConsoleColor.White;
+                        background = ConsoleColor.Blue;
+                        Globals.Write(i, j, Convert.ToChar("⇲"));
+                        Globals.SetForegroundColor(i, j, (ConsoleColor)foreground);
                     }
                     else
                     {
-                        foreground = null;
-                        background = null;
+                        if (desc[descriptionCharacter] == Convert.ToChar("▷"))
+                        {
+                            foreground = ConsoleColor.Red;
+                            red = true;
+                        }
+                        else
+                        {
+                            foreground = ConsoleColor.Blue;
+                        }
+                        Globals.Write(i, j, Convert.ToChar(red ? "⏵" : "⇱"));
+                        Globals.SetForegroundColor(i, j, (ConsoleColor)foreground);
                     }
+                    descriptionCharacter++;
+                    continue;
+                }
+                else if (desc[descriptionCharacter] == Convert.ToChar("⭖") && CheckNoEscape(descriptionCharacter, desc))
+                {
+                    foreground = null;
+                    background = null;
+                    Globals.Write(i, j, Convert.ToChar(" "));
                     descriptionCharacter++;
                     continue;
                 }
                 if (foreground != null)
                 {
                     Globals.SetForegroundColor(i, j, (ConsoleColor)foreground);
+                }
+                else
+                {
+                    Globals.SetForegroundColor(i, j, Console.ForegroundColor);
                 }
                 if (background != null)
                 {
@@ -330,7 +379,7 @@ public class VideoBlock : MenuBlock
         }
     }
 
-    private bool CheckNoEscape(int descriptionCharacter, char[] desc)
+    public static bool CheckNoEscape(int descriptionCharacter, char[] desc)
     {
         if (descriptionCharacter - 1 < 0)
         {
@@ -349,19 +398,23 @@ public class VideoBlock : MenuBlock
     private string ParseDescription(string description)
     {
         var parsed = description;
+        parsed = parsed.Replace("⭖", @"\⭖");
         parsed = parsed.Replace("¤", @"\¤");
         parsed = parsed.Replace("⁒", @"\⁒");
         parsed = parsed.Replace("▷", @"\▷");
         parsed = parsed.Replace("<br>", "¤");
+        parsed = parsed.Replace("<b>", "");
+        parsed = parsed.Replace("</b>", "");
         linkNumber = Regex.Matches(parsed, "<a href=\"(.*?)\">").Count;
-        parsed = Regex.Replace(parsed, "<a href=\"(.*?)\">", "[⁒$1⁒] ");
+        parsed = Regex.Replace(parsed, "<a href=\"(.*?)\">", "[⁒$1⭖] ");
         parsed = parsed.Replace("</a>", "");
         parsed = parsed.Replace("&apos;", @"'");
         parsed = parsed.Replace("&quot;", "\"");
         parsed = parsed.Replace("&amp;", "&");
         parsed = parsed.Replace("&nbsp;", " ");
-        parsed = Regex.Replace(parsed, @"(?<!\[⁒)http.?://[^ ¤]+(?!⁒\])", "");
+        parsed = Regex.Replace(parsed, @"(?<!\[⁒)http.?://[^ ¤]+(?!\])", "");
         parsed = Regex.Replace(parsed, @"⁒https://www\.youtube\.com/watch\?v=([^&]+)&t=[^ ]+?", "▷$1");
+        parsed = Regex.Replace(parsed, @"⁒https://www\.youtube\.com/shorts/([^ ]+)", "▷$1");
         return parsed;
     }
 
@@ -379,12 +432,14 @@ public class VideoBlock : MenuBlock
         if (j < Console.WindowHeight / 6 - heightMult - 1 || j >= Console.WindowHeight / 6) return false;
         if (i == (int)((float)Console.WindowWidth * (5f / 6f)) || i == Console.WindowWidth / 6)
         {
-            Globals.Write(i, j, Convert.ToChar("|"));
+            Globals.Write(i, j, "| ");
+            Globals.SetForegroundColor(i, j, Console.ForegroundColor);
             return false;
         }
         if (j == Console.WindowHeight / 6 - heightMult - 1)
         {
             Globals.Write(i, j, Convert.ToChar("—"));
+            Globals.SetForegroundColor(i, j, Console.ForegroundColor);
             return false;
         }
         return true;
@@ -401,7 +456,8 @@ public class VideoBlock : MenuBlock
         catch { }
         if (i == (int)((float)Console.WindowWidth * (5f / 6f)) || i == Console.WindowWidth / 6)
         {
-            Globals.Write(i, j, Convert.ToChar("|"));
+            Globals.SetForegroundColor(i, j, Console.ForegroundColor);
+            Globals.Write(i, j, "| ");
             return false;
         }
         if (j == (int)((float)Console.WindowHeight * (5f / 6f) + 1) && i == Console.WindowWidth / 6 + 1)
@@ -411,39 +467,27 @@ public class VideoBlock : MenuBlock
             {
                 Globals.Write(newPos, j, " Select and open links with ⬅, ➡, and Space.");
             }
-            for (int l = i; l <= Console.CursorLeft; l++)
-            {
-                try
-                {
-                    Globals.activeScene.protectedTile[l, j] = true;
-                }
-                catch { }
-            }
+            return false;
+        }
+        if (j == (int)((float)Console.WindowHeight * (5f / 6f) + 1))
+        {
             return false;
         }
         if (j == Console.WindowHeight / 6 || j == (int)((float)Console.WindowHeight * (5f / 6f)))
         {
             Globals.Write(i, j, Convert.ToChar("—"));
+            Globals.SetForegroundColor(i, j, Console.ForegroundColor);
             return false;
         }
         windowWidth = (int)((float)Console.WindowWidth * (5f / 6f)) - (Console.WindowWidth / 6);
         windowHeight = (int)((float)Console.WindowHeight * (5f / 6f)) - (Console.WindowHeight / 6);
         windowSpace = windowWidth * windowHeight;
-        if (desc.Length > windowSpace)
-        {
-            pageDescription = true;
-        }
-        else
-        {
-            pageDescription = false;
-        }
         return true;
     }
     int windowSpace = 0;
     int windowHeight = 0;
-    bool pageDescription = false;
 
-    protected override void OnCheckKeys(ConsoleKey key)
+    protected override async Task OnCheckKeys(ConsoleKey key)
     {
         if (key == ConsoleKey.Q && activeBecause == InactiveReason.Playing)
         {
@@ -488,33 +532,39 @@ public class VideoBlock : MenuBlock
             {
                 pageOffset--;
             }
+            if (Globals.debug)
+            {
+                Console.WriteLine(pageOffset);
+            }
         }
         if (key == ConsoleKey.DownArrow)
         {
             pageOffset++;
+            if (Globals.debug)
+            {
+                Console.WriteLine(pageOffset);
+            }
         }
         if (key == ConsoleKey.Enter || key == ConsoleKey.Spacebar && selectedLink > 0)
         {
             List<string> links = new();
             bool markingLink = false;
             string curLink = "";
-            for (int i = 0; i < desc.Length; i++)
+            for (int i = 0; i < sourceDesc.Length; i++)
             {
-                if (markingLink && !(desc[i] == Convert.ToChar("⁒") || desc[i] == Convert.ToChar("▷")) && CheckNoEscape(i, desc))
+                if (markingLink && !(sourceDesc[i] == Convert.ToChar("⁒") || sourceDesc[i] == Convert.ToChar("▷") || sourceDesc[i] == Convert.ToChar("⭖")) && CheckNoEscape(i, sourceDesc))
                 {
-                    curLink += desc[i];
+                    curLink += sourceDesc[i];
                 }
-                if ((desc[i] == Convert.ToChar("⁒") || desc[i] == Convert.ToChar("▷")) && CheckNoEscape(i, desc))
+                if ((sourceDesc[i] == Convert.ToChar("⁒") || sourceDesc[i] == Convert.ToChar("▷")) && CheckNoEscape(i, sourceDesc))
                 {
-                    markingLink = !markingLink;
-                    if (markingLink)
-                    {
-                        curLink = "";
-                    }
-                    else
-                    {
-                        links.Add(curLink);
-                    }
+                    markingLink = true;
+                    curLink = "";
+                }
+                else if (sourceDesc[i] == Convert.ToChar("⭖") && CheckNoEscape(i, sourceDesc))
+                {
+                    markingLink = false;
+                    links.Add(curLink);
                 }
             }
             if (links[selectedLink - 1].Contains("https://"))
@@ -534,7 +584,11 @@ public class VideoBlock : MenuBlock
             }
             else
             {
-                Globals.scenes.Push(new Scenes.DescriptionVideo(links[selectedLink - 1]));
+                LoadBar.loadMessage = "Opening video";
+                LoadBar.visible = true;
+                var descriptionVideo = await Scenes.DescriptionVideo.CreateAsync(links[selectedLink - 1]);
+                LoadBar.visible = false;
+                Globals.scenes.Push(descriptionVideo);
             }
         }
     }
