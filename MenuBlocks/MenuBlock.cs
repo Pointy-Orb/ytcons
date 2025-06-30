@@ -158,19 +158,6 @@ public class MenuBlock
                     drawCursor = j;
                 }
             }
-            /*
-            else
-            {
-                for (int l = prevMenuOffset; l < nextMenuOffset; l++)
-                {
-                    if (j >= Globals.activeScene.protectedTile.GetLength(1) || l >= Globals.activeScene.protectedTile.GetLength(0)) continue;
-                    if (!Globals.activeScene.protectedTile[l, j])
-                    {
-                        Globals.ClearTile(l, j);
-                    }
-                }
-            }
-			*/
         }
         if (Globals.activeScene.protectedTile.GetLength(0) != Console.WindowWidth || Globals.activeScene.protectedTile.GetLength(1) != winHeight)
         {
@@ -193,7 +180,7 @@ public class MenuBlock
         if (!active) return;
         if (!confirmed)
         {
-            if (key == ConsoleKey.K || key == ConsoleKey.UpArrow)
+            if (key == ConsoleKey.K || key == ConsoleKey.UpArrow || key == ConsoleKey.W)
             {
                 if (cursor > 0)
                 {
@@ -204,7 +191,7 @@ public class MenuBlock
                     cursor = options.Count - 1;
                 }
             }
-            else if (key == ConsoleKey.J || key == ConsoleKey.DownArrow)
+            else if (key == ConsoleKey.J || key == ConsoleKey.DownArrow || key == ConsoleKey.S)
             {
                 if (cursor < options.Count - 1)
                 {
@@ -220,12 +207,12 @@ public class MenuBlock
                 options[oldCursor].selected = false;
                 options[cursor].selected = true;
             }
-            if ((key == ConsoleKey.H || key == ConsoleKey.LeftArrow))
+            if ((key == ConsoleKey.H || key == ConsoleKey.LeftArrow || key == ConsoleKey.A))
             {
                 Globals.activeScene.PopMenu();
             }
         }
-        if (key == ConsoleKey.Spacebar || key == ConsoleKey.L || key == ConsoleKey.RightArrow)
+        if (key == ConsoleKey.Spacebar || key == ConsoleKey.L || key == ConsoleKey.RightArrow || key == ConsoleKey.D)
         {
             confirmed = true;
         }

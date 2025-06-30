@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using ImageMagick;
 
 namespace YTCons.MenuBlocks;
 
@@ -87,6 +88,14 @@ public class VideoBlock : MenuBlock
     private char[] FinishConstructor()
     {
         options.Add(new MenuOption("Play", this, () => PlayAsync(), () => Globals.activeScene.PushMenuAsync(new ChooseFormat(videoInfo))));
+        if (Dirs.ytdlp != null)
+        {
+            options.Add(new MenuOption("Download", this, () => Task.Run(() => Globals.activeScene.PushMenu(new ChooseFormat(videoInfo, true)))));
+        }
+        else if (Dirs.ffmpeg != null)
+        {
+            options.Add(new MenuOption("Download", this, () => Task.Run(() => Globals.activeScene.PushMenu(new ChooseResolution(videoInfo, "MPEG_4", true)))));
+        }
         options.Add(new MenuOption("Add To Playlist", this, () => Task.Run(() => Globals.activeScene.PushMenu(new AddToPlaylist(videoInfo)))));
         options.Add(new MenuOption("Show Description", this, () => Task.Run(() =>
         {
@@ -98,13 +107,19 @@ public class VideoBlock : MenuBlock
         {
             active = false;
             activeBecause = InactiveReason.ShowingThumbnail;
-            Task.Run(ShowThumbnail);
-            while (!gotThumbnail)
+            var showThumbail = ShowThumbnail();
+            while (!showThumbail.IsCompleted)
             {
                 LoadBar.loadMessage = "Getting thumbnail";
                 LoadBar.WriteLoad();
             }
             LoadBar.ClearLoad();
+        }), () => Task.Run(() =>
+        {
+            var confirmDownload = new MenuBlock(AnchorType.Cursor);
+            confirmDownload.options.Add(new MenuOption("Download", confirmDownload, () => DownloadThumbnail()));
+            confirmDownload.options[confirmDownload.cursor].selected = true;
+            Globals.activeScene.PushMenu(confirmDownload);
         })));
         options[cursor].selected = true;
         return ParseDescription(videoInfo.video.description).ToCharArray();
@@ -119,6 +134,21 @@ public class VideoBlock : MenuBlock
 
     private Process imageViewer = new();
 
+    private async Task DownloadThumbnail()
+    {
+        if (!gettingThumbnail.IsCompleted)
+        {
+            await gettingThumbnail;
+        }
+        var webp = await File.ReadAllBytesAsync(thumbnailPath);
+        using var image = new MagickImage(webp);
+        var thumbnailDownloadPath = Path.Combine(Dirs.downloadsDir, "thumbnails");
+        Directory.CreateDirectory(thumbnailDownloadPath);
+        image.Write(Path.Combine(thumbnailDownloadPath, $"{Dirs.MakeFileSafe(videoInfo.video.title, true)}.png"));
+        LoadBar.WriteLog($"Thumbnail downloaded to {Path.Combine(thumbnailDownloadPath, $"{videoInfo.video.title.Replace(":", ",")}.png")}");
+        Globals.activeScene.PopMenu();
+    }
+
     private async Task ShowThumbnailInner()
     {
         using (HttpClient client = new HttpClient())
@@ -132,12 +162,12 @@ public class VideoBlock : MenuBlock
     bool gotThumbnail = false;
     private async Task ShowThumbnail()
     {
+        if (!gettingThumbnail.IsCompleted)
+        {
+            await gettingThumbnail;
+        }
         try
         {
-            if (!gettingThumbnail.IsCompleted)
-            {
-                await gettingThumbnail;
-            }
             gotThumbnail = true;
             imageViewer = new();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -535,7 +565,7 @@ public class VideoBlock : MenuBlock
         {
             videoInfo.windowOpen = false;
         }
-        if (key == ConsoleKey.LeftArrow)
+        if (key == ConsoleKey.LeftArrow || key == ConsoleKey.H || key == ConsoleKey.A)
         {
             if (selectedLink > 1)
             {
@@ -546,7 +576,7 @@ public class VideoBlock : MenuBlock
                 selectedLink = linkNumber;
             }
         }
-        if (key == ConsoleKey.RightArrow)
+        if (key == ConsoleKey.RightArrow || key == ConsoleKey.L || key == ConsoleKey.D)
         {
             if (selectedLink < linkNumber)
             {
@@ -557,7 +587,7 @@ public class VideoBlock : MenuBlock
                 selectedLink = 1;
             }
         }
-        if (key == ConsoleKey.UpArrow)
+        if (key == ConsoleKey.UpArrow || key == ConsoleKey.K || key == ConsoleKey.W)
         {
             if (pageOffset > 0)
             {
@@ -568,7 +598,7 @@ public class VideoBlock : MenuBlock
                 Console.WriteLine(pageOffset);
             }
         }
-        if (key == ConsoleKey.DownArrow)
+        if (key == ConsoleKey.DownArrow || key == ConsoleKey.J || key == ConsoleKey.S)
         {
             pageOffset++;
             if (Globals.debug)

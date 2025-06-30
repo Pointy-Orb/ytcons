@@ -10,7 +10,7 @@ public class PlaylistScene : Scene
 
     private async Task GetPlaylists()
     {
-        var lists = Directory.EnumerateFiles(Globals.playlistDir);
+        var lists = Directory.EnumerateFiles(Dirs.playlistDir);
         var listTasks = new List<Task>();
         foreach (string path in lists)
         {
@@ -37,7 +37,7 @@ public class PlaylistScene : Scene
             totalVideos++;
         }
         await Task.WhenAll(videoTasks);
-        rootMenu.options.Add(new MenuOption(Path.GetFileNameWithoutExtension(path).Replace("_", " "), rootMenu, () => PushMenuAsync(menu), menu, () => Task.Run(() => PushMenu(new PlaylistOptions(path, rootMenu, menu)))));
+        rootMenu.options.Add(new MenuOption(Path.GetFileNameWithoutExtension(path).Replace("_", " "), rootMenu, () => PushMenuAsync(menu), menu, () => Task.Run(() => PushMenu(new PlaylistOptions(path, rootMenu)))));
         menu.options[menu.cursor].selected = true;
         if (rootMenu.options.Count() >= 10)
         {
@@ -49,8 +49,11 @@ public class PlaylistScene : Scene
     private async Task GetVideo(string videoId, MenuBlock menu, string path)
     {
         var video = await VideoBlock.CreateAsync(videoId);
-        video.options.Insert(2, new MenuOption("Remove from Playlist", video, () => PlaylistOptions.RemoveVideo(path, menu, video.videoInfo)));
-        menu.options.Add(new MenuOption(video.videoInfo.video.title, menu, () => PushMenuAsync(video)));
+        var removeOption = new MenuOption("Remove from Playlist", video, () => PlaylistOptions.RemoveVideo(new MenuOption("", video, () => Task.Run(() => { })), menu, video.videoInfo));
+        removeOption.ChangeOnSelected(() => PlaylistOptions.RemoveVideo(removeOption, menu, video.videoInfo));
+        removeOption.extraData = path;
+        video.options.Insert(3, removeOption);
+        menu.options.Add(new MenuOption(video.videoInfo.video.title, menu, () => PushMenuAsync(video), video));
         if (menu.options.Count() >= 10) menu.grayUnselected = true;
         finishedVideos++;
     }

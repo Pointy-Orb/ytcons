@@ -1,6 +1,4 @@
 using YTCons.Scenes;
-using YTCons.UserExp;
-using static System.Environment;
 
 namespace YTCons;
 
@@ -14,41 +12,6 @@ public enum AnchorType
 
 public static class Globals
 {
-    internal static string configDir
-    {
-        get
-        {
-            var config = Path.Combine(GetFolderPath(SpecialFolder.ApplicationData, SpecialFolderOption.DoNotVerify), "ytcons");
-            Directory.CreateDirectory(config);
-            return config;
-        }
-    }
-
-    internal static string localDir
-    {
-        get
-        {
-            var local = Path.Combine(GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify), "ytcons");
-            Directory.CreateDirectory(local);
-            var noobGuide = Path.Combine(local, "explainthisplz.txt");
-            if (!File.Exists(noobGuide))
-            {
-                //Write a file to the local directory that tells curious eyes what these variable are for.
-                File.WriteAllLines(noobGuide, ExplainStuff.LocalFiles);
-            }
-            return local;
-        }
-    }
-
-    internal static string playlistDir
-    {
-        get
-        {
-            var playlist = Path.Combine(configDir, "playlists");
-            Directory.CreateDirectory(playlist);
-            return playlist;
-        }
-    }
 
     internal static Stack<Scene> scenes = new();
 
@@ -70,6 +33,14 @@ public static class Globals
         defaultForeground = Console.ForegroundColor;
         defaultBackground = Console.BackgroundColor;
         var scene = new RootScene();
+        if (Dirs.ffmpeg == null)
+        {
+            LoadBar.WriteLog("ffmpeg not found. Install to add subtitiles to downloaded videos.");
+        }
+        if (Dirs.ytdlp == null)
+        {
+            LoadBar.WriteLog($"yt-dlp not found. Install for {(Dirs.ffmpeg == null ? "the ability to make" : "more efficient")} downloads.");
+        }
         scenes.Push(scene);
     }
 
@@ -130,9 +101,9 @@ public static class Globals
     {
         var key = Console.ReadKey(true);
         await activeScene.CheckKeys(key);
-        if (key.Key == ConsoleKey.Escape)
+        if (key.Key == ConsoleKey.Escape && Globals.debug)
         {
-            Globals.Exit(0);
+            Console.Clear();
         }
     }
 

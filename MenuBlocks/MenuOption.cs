@@ -40,6 +40,11 @@ public class MenuOption
         this.childMenu = childMenu;
     }
 
+    public void ChangeOnSelected(Func<Task> newAction)
+    {
+        _onSelected = newAction;
+    }
+
     public async Task OnSelected()
     {
         Task task = _onSelected();

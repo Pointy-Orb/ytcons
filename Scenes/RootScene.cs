@@ -22,7 +22,7 @@ public class RootScene : Scene
     private void PlaylistSceneIfPlaylistsExist()
     {
         childSceneOpen = true;
-        if (Directory.EnumerateFileSystemEntries(Globals.playlistDir).Count() > 0)
+        if (Directory.EnumerateFileSystemEntries(Dirs.playlistDir).Count() > 0)
         {
             Globals.scenes.Push(new PlaylistScene());
         }

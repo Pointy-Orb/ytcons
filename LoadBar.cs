@@ -87,7 +87,7 @@ public static class LoadBar
         ActuallyWriteLog();
     }
 
-    private static byte logTime = 0;
+    private static int logTime = 0;
     private static string log = "";
 
     private static void ActuallyWriteLog()
@@ -110,7 +110,11 @@ public static class LoadBar
     public static void WriteLog(string log)
     {
         LoadBar.log = log;
-        logTime = 40;
+        //Make it easier to read longer log messages
+        logTime = log.Length * 3;
+        if (logTime < 40) logTime = 40;
+        Console.SetCursorPosition(0, Console.WindowHeight);
+        Console.Write(log);
     }
 
     public static void ClearLoad()

@@ -2,7 +2,7 @@ namespace YTCons.MenuBlocks;
 
 public class ChooseFormat : MenuBlock
 {
-    public ChooseFormat(ExtractedVideoInfo videoInfo, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
+    public ChooseFormat(ExtractedVideoInfo videoInfo, bool dowloading = false, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
     {
         List<string> formats = new List<string>();
         foreach (VideoStream stream in videoInfo.video.videoStreams)
@@ -14,7 +14,7 @@ public class ChooseFormat : MenuBlock
         }
         foreach (string format in formats)
         {
-            options.Add(new MenuOption(format, this, () => Globals.activeScene.PushMenuAsync(new ChooseResolution(videoInfo, format))));
+            options.Add(new MenuOption(format, this, () => Globals.activeScene.PushMenuAsync(new ChooseResolution(videoInfo, format, dowloading))));
         }
         options[cursor].selected = true;
     }

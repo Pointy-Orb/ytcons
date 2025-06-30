@@ -10,7 +10,7 @@ public class AddToPlaylist : MenuBlock
     public AddToPlaylist(ExtractedVideoInfo video, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
     {
         this.video = video;
-        var lists = Directory.EnumerateFiles(Globals.playlistDir);
+        var lists = Directory.EnumerateFiles(Dirs.playlistDir);
         options.Add(new MenuOption("New Playlist", this, () => NewPlaylist(video)));
         options[cursor].selected = true;
         foreach (string list in lists)
@@ -40,7 +40,12 @@ public class AddToPlaylist : MenuBlock
             var rootMenu = Globals.activeScene.menus.Reverse().First();
             var affectedList = rootMenu.options.Find(i => i.option == Globals.BeautifyPlaylistName(path));
             if (affectedList == null || affectedList.childMenu == null) return;
-            affectedList.childMenu.options.Add(new MenuOption(info.video.title, affectedList.childMenu, () => Task.Run(() => Globals.activeScene.PushMenu(new VideoBlock(info)))));
+            var video = new VideoBlock(info);
+            var removeOption = new MenuOption("Remove from Playlist", video, () => PlaylistOptions.RemoveVideo(new MenuOption("", video, () => Task.Run(() => { })), affectedList.childMenu, video.videoInfo));
+            removeOption.ChangeOnSelected(() => PlaylistOptions.RemoveVideo(removeOption, affectedList.childMenu, video.videoInfo));
+            removeOption.extraData = path;
+            video.options.Insert(3, removeOption);
+            affectedList.childMenu.options.Add(new MenuOption(info.video.title, affectedList.childMenu, () => Task.Run(() => Globals.activeScene.PushMenu(video))));
         }
     }
 
@@ -65,7 +70,8 @@ public class AddToPlaylist : MenuBlock
             return;
         }
         name = name.Replace(" ", "_");
-        name = Path.Combine(Globals.playlistDir, name + ".json");
+        name = Dirs.MakeFileSafe(name);
+        name = Path.Combine(Dirs.playlistDir, name + ".json");
         if (File.Exists(name))
         {
             LoadBar.WriteLog("A playlist by that name already exists.");
@@ -80,14 +86,22 @@ public class AddToPlaylist : MenuBlock
         LoadBar.WriteLog($"Video saved to playlist \"{Globals.BeautifyPlaylistName(name)}\"");
         if (Globals.activeScene as PlaylistScene != null)
         {
+            //Manually add the ability to remove the video from the playlist
             var videoBlock = new VideoBlock(info);
             var videoTitleBlock = new MenuBlock(AnchorType.Cursor);
             videoTitleBlock.options.Add(new MenuOption(info.video.title, videoTitleBlock, () => Task.Run(() => Globals.activeScene.PushMenu(videoBlock))));
+
             videoTitleBlock.options[videoTitleBlock.cursor].selected = true;
             videoBlock.options[videoBlock.cursor].selected = true;
+
+            var removeOption = new MenuOption("Remove from Playlist", videoBlock, () => PlaylistOptions.RemoveVideo(new MenuOption("", videoTitleBlock, () => Task.Run(() => { })), videoTitleBlock, info));
+            removeOption.ChangeOnSelected(() => PlaylistOptions.RemoveVideo(removeOption, videoTitleBlock, videoBlock.videoInfo));
+            removeOption.extraData = name;
+            videoBlock.options.Insert(3, removeOption);
+
             Globals.activeScene.menus.Reverse().First().options.Add(new MenuOption(
                 Globals.BeautifyPlaylistName(name), Globals.activeScene.menus.Reverse().First(), () => Task.Run(() => Globals.activeScene.PushMenu(videoTitleBlock)), videoTitleBlock,
-                () => Task.Run(() => Globals.activeScene.PushMenu(new PlaylistOptions(name, Globals.activeScene.menus.Reverse().First(), videoTitleBlock)))));
+                () => Task.Run(() => Globals.activeScene.PushMenu(new PlaylistOptions(name, Globals.activeScene.menus.Reverse().First())))));
         }
     }
 }
