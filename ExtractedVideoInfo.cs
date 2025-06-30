@@ -308,6 +308,8 @@ public class ExtractedVideoInfo
         if (validStreams.Count > 0)
         {
             await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "data.json"), json);
+			var validStreamsJson = JsonConvert.SerializeObject(validStreams);
+			await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json"),validStreamsJson);
             return (true, value);
         }
         else
@@ -322,13 +324,26 @@ public class ExtractedVideoInfo
         {
             var fileJson = await File.ReadAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "data.json"));
             var fileTempVideo = JsonConvert.DeserializeObject<Video>(fileJson);
-            foreach (VideoStream stream in fileTempVideo.videoStreams)
-            {
-                if (await ValidateStreamAsync(stream))
-                {
-                    validStreams.Add(stream);
-                }
-            }
+			if(File.Exists(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json")))
+			{
+				var validStreamsRaw = await File.ReadAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json"));
+				validStreams = JsonConvert.DeserializeObject<List<VideoStream>>(validStreamsRaw);
+			}
+			else
+			{
+				foreach (VideoStream stream in fileTempVideo.videoStreams)
+				{
+					if (await ValidateStreamAsync(stream))
+					{
+						validStreams.Add(stream);
+					}
+				}
+				if(validStreams.Count() > 0)
+				{
+					var validStreamsJson = JsonConvert.SerializeObject(validStreams);
+					await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json"),validStreamsJson);
+				}
+			}
             if (validStreams.Count() > 0)
             {
                 return fileTempVideo;
@@ -409,6 +424,8 @@ public class ExtractedVideoInfo
                 success = true;
                 SetBestSite(maybeBestSite);
                 await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "data.json"), json);
+		var validStreamsJson = JsonConvert.SerializeObject(validStreams);
+		await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json"),validStreamsJson);
                 return tempVideo;
             }
             else if (Globals.debug)
@@ -427,7 +444,7 @@ public class ExtractedVideoInfo
                 await Main(id);
             }
             Console.SetCursorPosition(0, Console.CursorTop);
-            Console.WriteLine($"Usable mirror could not be found.");
+            Console.WriteLine($"Usable mirror could not be found. Try again later.");
             foreach (HttpStatusCode code in codes)
             {
                 Console.WriteLine($"{codes.IndexOf(code)}: {code} ({(int)code})");
