@@ -1,10 +1,7 @@
 TODO:
-Make search function work
 Iron out kinks with paged description
-Make playlist feature
 Allow viewing of channel pages
 Integrate RSS feed
-Add support for subtitles
 
 DOING:
 
