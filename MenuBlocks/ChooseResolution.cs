@@ -48,10 +48,10 @@ public class ChooseResolution : MenuBlock
         {
             File.Delete(targetPath);
         }
-        if (Dirs.ytdlp != null)
+        if (Dirs.TryGetPathApp("yt-dlp") != null)
         {
             var ytdlp = new Process();
-            ytdlp.StartInfo.FileName = Dirs.ytdlp;
+            ytdlp.StartInfo.FileName = Dirs.TryGetPathApp("yt-dlp");
             //Get rid of the p's and the fps's
             var formattedResolution = Regex.Replace(resolution, @"(\d*?)p.*", "$1");
             string? fps = Regex.Replace(resolution, @"\d*p(\d+)", "$1");
@@ -59,7 +59,7 @@ public class ChooseResolution : MenuBlock
             {
                 fps = null;
             }
-            ytdlp.StartInfo.Arguments = $"-P {Dirs.downloadsDir} {(chosenFormat == "MPEG_4" ? "-f mp4" : "")} -o \"{info.video.title}{(Dirs.ffmpeg != null && info.subtitles.Count() > 0 ? "-noSub" : "")}.{(chosenFormat == "MPEG_4" ? "mp4" : chosenFormat.ToLower())}\" -S \"res:{formattedResolution}{(fps == null ? "" : ",fps:" + fps)}\" {info.id}";
+            ytdlp.StartInfo.Arguments = $"-P {Dirs.downloadsDir} {(chosenFormat == "MPEG_4" ? "-f mp4" : "")} -o \"{info.video.title}{(Dirs.TryGetPathApp("ffmpeg") != null && info.subtitles.Count() > 0 ? "-noSub" : "")}.{(chosenFormat == "MPEG_4" ? "mp4" : chosenFormat.ToLower())}\" -S \"res:{formattedResolution}{(fps == null ? "" : ",fps:" + fps)}\" {info.id}";
             if (Globals.debug)
             {
                 Console.WriteLine(ytdlp.StartInfo.Arguments);
@@ -71,16 +71,16 @@ public class ChooseResolution : MenuBlock
                 Console.Clear();
             }
         }
-        else if (Dirs.ffmpeg != null)
+        else if (Dirs.TryGetPathApp("ffmpeg") != null)
         {
             var ffmpeg = new Process();
-            var chosenPath = Dirs.ffmpeg != null && info.subtitles.Count() > 0 ? targetPathNoSub : targetPath;
+            var chosenPath = Dirs.TryGetPathApp("ffmpeg") != null && info.subtitles.Count() > 0 ? targetPathNoSub : targetPath;
             ffmpeg.StartInfo.Arguments = $"-i \"{rightStream.url}\" -i {info.video.audioStreams[0].url} -c:v libx264 -c:a aac \"{chosenPath}\"";
-            ffmpeg.StartInfo.FileName = Dirs.ffmpeg;
+            ffmpeg.StartInfo.FileName = Dirs.TryGetPathApp("ffmpeg");
             ffmpeg.Start();
             await ffmpeg.WaitForExitAsync();
         }
-        if (Dirs.ffmpeg != null && info.subtitles.Count() > 0)
+        if (Dirs.TryGetPathApp("ffmpeg") != null && info.subtitles.Count() > 0)
         {
             var ffmpeg = new Process();
             var subInput = "";
@@ -99,7 +99,7 @@ public class ChooseResolution : MenuBlock
                 subMetadata += $"-metadata:s:s:{i} language={threeLetterCode} ";
             }
             ffmpeg.StartInfo.Arguments = $"-i \"{targetPathNoSub}\" {subInput} {subMaps} -c copy {subMetadata} \"{targetPath}\"";
-            ffmpeg.StartInfo.FileName = Dirs.ffmpeg;
+            ffmpeg.StartInfo.FileName = Dirs.TryGetPathApp("ffmpeg");
             if (Globals.debug)
             {
                 Console.SetCursorPosition(0, 10);

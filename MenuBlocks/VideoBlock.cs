@@ -88,11 +88,11 @@ public class VideoBlock : MenuBlock
     private char[] FinishConstructor()
     {
         options.Add(new MenuOption("Play", this, () => PlayAsync(), () => Globals.activeScene.PushMenuAsync(new ChooseFormat(videoInfo))));
-        if (Dirs.ytdlp != null)
+        if (Dirs.TryGetPathApp("yt-dlp") != null)
         {
             options.Add(new MenuOption("Download", this, () => Task.Run(() => Globals.activeScene.PushMenu(new ChooseFormat(videoInfo, true)))));
         }
-        else if (Dirs.ffmpeg != null)
+        else if (Dirs.TryGetPathApp("ffmpeg") != null)
         {
             options.Add(new MenuOption("Download", this, () => Task.Run(() => Globals.activeScene.PushMenu(new ChooseResolution(videoInfo, "MPEG_4", true)))));
         }
@@ -180,7 +180,7 @@ public class VideoBlock : MenuBlock
             }
             else
             {
-                var process = File.Exists("/usr/bin/chafa") ? "/usr/bin/chafa" : "/usr/bin/open";
+                var process = Dirs.TryGetPathApp("chafa") != null ? Dirs.TryGetPathApp("chafa") : Dirs.GetPathApp("open");
                 Console.SetCursorPosition(Console.WindowWidth / 2, 0);
                 imageViewer.StartInfo = new ProcessStartInfo
                 {
@@ -202,15 +202,8 @@ public class VideoBlock : MenuBlock
         {
             if (gotThumbnail) Console.Write("Error opening image application.");
             else Console.Write("Error getting thumbnail");
-            Console.Write(" Press enter to resume program.");
-            while (true)
-            {
-                var key = Console.ReadKey(true);
-                if (key.Key == ConsoleKey.Enter)
-                {
-                    break;
-                }
-            }
+            Console.Write(" Press any key to resume program.");
+            Console.ReadKey(true);
         }
     }
 

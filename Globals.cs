@@ -33,13 +33,13 @@ public static class Globals
         defaultForeground = Console.ForegroundColor;
         defaultBackground = Console.BackgroundColor;
         var scene = new RootScene();
-        if (Dirs.ffmpeg == null)
+        if (Dirs.TryGetPathApp("ffmpeg") == null)
         {
             LoadBar.WriteLog("ffmpeg not found. Install to add subtitiles to downloaded videos.");
         }
-        if (Dirs.ytdlp == null)
+        if (Dirs.TryGetPathApp("yt-dlp") == null)
         {
-            LoadBar.WriteLog($"yt-dlp not found. Install for {(Dirs.ffmpeg == null ? "the ability to make" : "more efficient")} downloads.");
+            LoadBar.WriteLog($"yt-dlp not found. Install for {(Dirs.TryGetPathApp("ffmpeg") == null ? "the ability to make" : "more efficient")} downloads.");
         }
         scenes.Push(scene);
     }

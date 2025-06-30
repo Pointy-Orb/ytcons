@@ -308,8 +308,8 @@ public class ExtractedVideoInfo
         if (validStreams.Count > 0)
         {
             await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "data.json"), json);
-			var validStreamsJson = JsonConvert.SerializeObject(validStreams);
-			await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json"),validStreamsJson);
+            var validStreamsJson = JsonConvert.SerializeObject(validStreams);
+            await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "validStreams.json"), validStreamsJson);
             return (true, value);
         }
         else
@@ -324,26 +324,26 @@ public class ExtractedVideoInfo
         {
             var fileJson = await File.ReadAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "data.json"));
             var fileTempVideo = JsonConvert.DeserializeObject<Video>(fileJson);
-			if(File.Exists(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json")))
-			{
-				var validStreamsRaw = await File.ReadAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json"));
-				validStreams = JsonConvert.DeserializeObject<List<VideoStream>>(validStreamsRaw);
-			}
-			else
-			{
-				foreach (VideoStream stream in fileTempVideo.videoStreams)
-				{
-					if (await ValidateStreamAsync(stream))
-					{
-						validStreams.Add(stream);
-					}
-				}
-				if(validStreams.Count() > 0)
-				{
-					var validStreamsJson = JsonConvert.SerializeObject(validStreams);
-					await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json"),validStreamsJson);
-				}
-			}
+            if (File.Exists(Path.Combine(Dirs.VideoIdFolder(id), "validStreams.json")))
+            {
+                var validStreamsRaw = await File.ReadAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "validStreams.json"));
+                validStreams = JsonConvert.DeserializeObject<List<VideoStream>>(validStreamsRaw);
+            }
+            else
+            {
+                foreach (VideoStream stream in fileTempVideo.videoStreams)
+                {
+                    if (await ValidateStreamAsync(stream))
+                    {
+                        validStreams.Add(stream);
+                    }
+                }
+                if (validStreams.Count() > 0)
+                {
+                    var validStreamsJson = JsonConvert.SerializeObject(validStreams);
+                    await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "validStreams.json"), validStreamsJson);
+                }
+            }
             if (validStreams.Count() > 0)
             {
                 return fileTempVideo;
@@ -424,8 +424,8 @@ public class ExtractedVideoInfo
                 success = true;
                 SetBestSite(maybeBestSite);
                 await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "data.json"), json);
-		var validStreamsJson = JsonConvert.SerializeObject(validStreams);
-		await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id),"validStreams.json"),validStreamsJson);
+                var validStreamsJson = JsonConvert.SerializeObject(validStreams);
+                await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "validStreams.json"), validStreamsJson);
                 return tempVideo;
             }
             else if (Globals.debug)
@@ -475,7 +475,7 @@ public class ExtractedVideoInfo
     public async Task Play(string format = "MPEG_4", string quality = "720p")
     {
         mediaPlayer = new();
-        mediaPlayer.StartInfo.FileName = "/usr/bin/mpv";
+        mediaPlayer.StartInfo.FileName = Dirs.GetPathApp("mpv");
         VideoStream bestStream = validStreams[0];
         foreach (VideoStream stream in validStreams)
         {

@@ -6,40 +6,8 @@ namespace YTCons;
 
 public static class Dirs
 {
-    //Making this a property means that compatibility is much easier
-    internal static string? ffmpeg
+    public static string? TryGetPathApp(string appname)
     {
-        get
-        {
-            return GetPathApp("ffmpeg");
-        }
-    }
-
-    internal static string? ytdlp
-    {
-        get
-        {
-            return GetPathApp("yt-dlp");
-        }
-    }
-
-    //mpv is critical to the app's function, that's why it throws an exception and ffmpeg doesn't
-    internal static string mpv
-    {
-        get
-        {
-            var mpvPath = GetPathApp("mpv");
-            if (mpvPath == null)
-            {
-                throw new NullReferenceException("mpv not found in environment path");
-            }
-            return mpvPath;
-        }
-    }
-
-    private static string? GetPathApp(string appname)
-    {
-
         //Windows just had to be different
         var rawPath = System.Environment.GetEnvironmentVariable(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Path" : "PATH");
         string[] paths = rawPath.Split(':');
@@ -53,6 +21,16 @@ public static class Dirs
             }
         }
         return null;
+    }
+
+    public static string GetPathApp(string appname)
+    {
+        var pathapp = TryGetPathApp(appname);
+        if (pathapp == null)
+        {
+            throw new FileNotFoundException($"App {appname} was not found on the environment path.");
+        }
+        return pathapp;
     }
 
     internal static string downloadsDir
