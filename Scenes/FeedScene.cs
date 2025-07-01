@@ -36,6 +36,7 @@ public class FeedScene : Scene
             feedMenu.CheckUnreadOptions();
             menu.options.Add(option);
         }
+        if (menu.options.Count() > 7) menu.grayUnselected = true;
         instance.PushMenu(menu);
         return instance;
     }

@@ -73,6 +73,18 @@ public class MenuOption
 
     protected virtual void PreDraw(int i, int j) { }
 
+    private int DivideWithPowers(int n, int d)
+    {
+        int divisor = d;
+        int i = 0;
+        while ((float)n / (float)divisor >= 1)
+        {
+            i++;
+            divisor *= d;
+        }
+        return i;
+    }
+
     public void Draw(int i, int j, int prevMenuOffset, out int nextMenuOffset)
     {
         drawX = i;
@@ -94,7 +106,7 @@ public class MenuOption
         }
         if (useCounter && counter > 0)
         {
-            int digits = counter / 10 + 1;
+            int digits = DivideWithPowers(counter, 10) + 1;
             int preDrawX = drawX;
             SafeWrite($"({counter}) ", out drawX);
             for (int l = preDrawX + 1; l <= preDrawX + digits; l++)

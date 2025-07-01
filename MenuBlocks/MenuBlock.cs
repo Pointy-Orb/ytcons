@@ -124,19 +124,23 @@ public class MenuBlock
         if (!draw || !PreDraw()) return;
         int i = prevMenuOffset;
         bool overrideAnchor = options.Count() > winHeight;
-        for (int j = Console.WindowTop; j < winHeight - 1; j++)
+        for (int j = Console.WindowTop; j < winHeight; j++)
         {
             var pos = j - drawOffset;
             if (anchorType == AnchorType.Center || ((anchorType == AnchorType.Cursor || overrideAnchor) && prevDrawCursor == null))
             {
                 pos -= winHeight / 2;
-                pos += options.Count / 2;
+                if (!overrideAnchor)
+                    pos += options.Count / 2;
             }
-            if (anchorType == AnchorType.Cursor && prevDrawCursor != null)
+            if (anchorType == AnchorType.Cursor || overrideAnchor)
             {
                 pos += cursor;
-                pos -= (int)prevDrawCursor;
-                cursorAnchorPos = cursor - (int)prevDrawCursor;
+                if (prevDrawCursor != null)
+                {
+                    pos -= (int)prevDrawCursor;
+                    cursorAnchorPos = cursor - (int)prevDrawCursor;
+                }
             }
             if (anchorType == AnchorType.Bottom && !overrideAnchor)
             {

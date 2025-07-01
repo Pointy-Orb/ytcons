@@ -4,6 +4,14 @@ namespace YTCons.Scenes;
 
 public class Scene
 {
+    public MenuBlock RootMenu
+    {
+        get
+        {
+            return menus.Reverse().First();
+        }
+    }
+
     public Stack<MenuBlock> menus = new();
     internal bool[,] protectedTile = new bool[Console.WindowWidth, Console.WindowHeight];
 
@@ -16,7 +24,6 @@ public class Scene
 
     public async Task Update()
     {
-        OnUpdate();
         LoadBar.WriteLoad();
         if (menus.TryPeek(out var result))
         {
@@ -27,6 +34,7 @@ public class Scene
             menus.Peek().Reset();
         }
         prevMenuCount = menus.Count;
+        OnUpdate();
     }
 
     protected virtual void OnUpdate()
