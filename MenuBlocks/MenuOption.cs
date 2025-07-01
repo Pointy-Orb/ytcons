@@ -2,6 +2,9 @@ namespace YTCons.MenuBlocks;
 
 public class MenuOption
 {
+    public int counter = 0;
+    public bool useCounter = false;
+
     public string? extraData = null;
 
     public bool selected = false;
@@ -65,8 +68,10 @@ public class MenuOption
     int drawX;
     int drawY;
 
-    protected virtual void PostDraw()
+    protected virtual void PostDraw(int i, int j)
     { }
+
+    protected virtual void PreDraw(int i, int j) { }
 
     public void Draw(int i, int j, int prevMenuOffset, out int nextMenuOffset)
     {
@@ -87,13 +92,23 @@ public class MenuOption
         {
             SafeWrite("    ", out drawX);
         }
+        if (useCounter && counter > 0)
+        {
+            int digits = counter / 10 + 1;
+            int preDrawX = drawX;
+            SafeWrite($"({counter}) ", out drawX);
+            for (int l = preDrawX + 1; l <= preDrawX + digits; l++)
+            {
+                Globals.SetForegroundColor(l, j, ConsoleColor.Yellow);
+            }
+        }
         SafeWrite(option, out drawX);
         for (int l = prevMenuOffset; l < drawX; l++)
         {
             SafeWrite(" ", out _);
         }
         nextMenuOffset = drawX;
-        PostDraw();
+        PostDraw(i, j);
     }
 
     private void SafeWrite(string input, out int newX)
