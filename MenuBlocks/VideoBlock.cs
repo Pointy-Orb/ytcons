@@ -201,7 +201,7 @@ public class VideoBlock : MenuBlock
         catch
         {
             if (gotThumbnail) Console.Write("Error opening image application.");
-            else Console.Write("Error getting thumbnail");
+            else Console.Write("Error getting thumbnail.");
             Console.Write(" Press any key to resume program.");
             Console.ReadKey(true);
         }

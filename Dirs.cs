@@ -79,6 +79,16 @@ public static class Dirs
         }
     }
 
+    internal static string feedsDir
+    {
+        get
+        {
+            var feeds = Path.Combine(localDir, "feeds");
+            Directory.CreateDirectory(feeds);
+            return feeds;
+        }
+    }
+
     /// <summary>
     /// Takes a string and converts it to a safe filename.
     /// More verbosely, it takes a string and changes all of the problematic characters

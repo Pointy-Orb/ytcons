@@ -13,9 +13,9 @@ public class MenuOption
 
     public string option;
 
-    private Func<Task> _onSelected;
+    protected Func<Task> _onSelected;
 
-    private Func<Task>? _altOnSelected;
+    protected Func<Task>? _altOnSelected;
 
     public MenuBlock parent;
 
@@ -65,6 +65,9 @@ public class MenuOption
     int drawX;
     int drawY;
 
+    protected virtual void PostDraw()
+    { }
+
     public void Draw(int i, int j, int prevMenuOffset, out int nextMenuOffset)
     {
         drawX = i;
@@ -90,6 +93,7 @@ public class MenuOption
             SafeWrite(" ", out _);
         }
         nextMenuOffset = drawX;
+        PostDraw();
     }
 
     private void SafeWrite(string input, out int newX)

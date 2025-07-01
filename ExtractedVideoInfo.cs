@@ -99,7 +99,7 @@ public class ExtractedVideoInfo
         string instanceList = "";
         using (var staticClient = new HttpClient())
         {
-            HttpResponseMessage response = await staticClient.GetAsync(url);
+            using HttpResponseMessage response = await staticClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine($"Error getting instances: {response.StatusCode} ({(int)response.StatusCode})");
@@ -182,7 +182,7 @@ public class ExtractedVideoInfo
             return;
         }
         var subUrl = new Uri(subtitle.url);
-        var response = await client.GetAsync(subUrl, cancel);
+        using var response = await client.GetAsync(subUrl, cancel);
         if (!response.IsSuccessStatusCode)
         {
             return;
@@ -228,19 +228,7 @@ public class ExtractedVideoInfo
         LoadBar.loadMessageDebug = "Finding valid API";
         var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var combinedCancel = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, cancellationToken);
-        HttpResponseMessage response;
-        try
-        {
-            response = await client.GetAsync(url, combinedCancel.Token);
-        }
-        catch (Exception ex)
-        {
-            if (Globals.debug)
-            {
-                Console.WriteLine($"Exception: {ex.Message}");
-            }
-            throw;
-        }
+        using var response = await client.GetAsync(url, combinedCancel.Token);
         if (Globals.debug)
         {
             Console.WriteLine($"{site} got a response");

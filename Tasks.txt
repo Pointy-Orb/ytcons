@@ -3,17 +3,9 @@ Iron out kinks with paged description
 Allow viewing of channel pages
 Integrate RSS feed
 Allow viewing of comments section
+Add settings
 
 DOING:
 
 
 DONE:
-
-
-
-
-
-
-
-
-

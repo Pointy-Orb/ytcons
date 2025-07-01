@@ -12,6 +12,7 @@ public class RootScene : Scene
     {
         logo = GetLogo();
         var menu = new MenuBlock(AnchorType.Bottom);
+        menu.options.Add(new MenuOption("Feeds", menu, () => OpenFeeds()));
         menu.options.Add(new MenuOption("Search", menu, () => Search()));
         menu.options.Add(new MenuOption("Playlists", menu, () => Task.Run(PlaylistSceneIfPlaylistsExist)));
         menu.options.Add(new MenuOption("Exit", menu, () => Task.Run(() => Globals.Exit(0))));
@@ -30,6 +31,13 @@ public class RootScene : Scene
         {
             LoadBar.WriteLog("No playlists were found.");
         }
+    }
+
+    private async Task OpenFeeds()
+    {
+        var feedScene = await FeedScene.CreateAsync();
+        childSceneOpen = true;
+        Globals.scenes.Push(feedScene);
     }
 
     private async Task Search()
