@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
+using System.Collections;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using Iso639;
@@ -68,14 +70,52 @@ public class ExtractedVideoInfo
             Console.WriteLine("Exception: " + ex.Message);
             throw;
         }
-        //await ConvertSubs();
     }
 
     private async Task GetSubtitles()
     {
-        //TODO: This only works for auto-subs. Throw this into its own method called by this method and write a new method for the manual subs
+        var autoSubs = GetAutoSubs();
+        var manualSubs = GetManualSubs();
+        await autoSubs;
+        await manualSubs;
+    }
+
+    private async Task GetManualSubs()
+    {
+        PropertyInfo[] langs = video.Subtitles.GetType().GetProperties();
+        ConcurrentBag<string> pathBag = new();
+        List<Task> subTasks = new();
+        foreach(PropertyInfo lang in langs)
+        {
+            var language = lang.Name;
+            if (language == "as") language = "ase";
+            if (language == "is") language = "isl";
+            if (language == "new") language = "nwa";
+            var nullLang = video.Subtitles.GetType().GetProperty(language);
+            if(nullLang == null) continue;
+            var langList = (List<SubLang>?)nullLang.GetValue(video.Subtitles);
+            if(langList == null || langList.Count() < 1) continue;
+            var subPath = Path.Combine(Dirs.VideoIdFolder(id), Dirs.MakeFileSafe(langList[0].Name,true,true)+ $".{language}.srt");
+            if (File.Exists(subPath))
+            {
+                subtitles.Add(subPath);
+                continue;
+            }
+            subTasks.Add(GetSubsInner(langList,pathBag,subPath));
+        }
+        if(subTasks.Count() <= 0) return;
+
+        await Task.WhenAll(subTasks);
+        foreach(string path in pathBag)
+        {
+            subtitles.Add(path);
+        }
+    }
+
+    private async Task GetAutoSubs()
+    {
         var language = video.Language;
-        var subPath = Path.Combine(Dirs.VideoIdFolder(id), language + "-auto.srt");
+        var subPath = Path.Combine(Dirs.VideoIdFolder(id), language + $"-auto.{language}.srt");
         //Some languages are problematic keywords. These were changed in the json but have to be accounted for in the live conversion
         if (language == "as") language = "ase";
         if (language == "is") language = "isl";
@@ -85,15 +125,27 @@ public class ExtractedVideoInfo
             subtitles.Add(subPath);
             return;
         }
-        List<SubLang>? autoSub = (List<SubLang>)video.AutomaticCaptions.GetType().GetProperty(video.Language).GetValue(video.AutomaticCaptions);
+        List<SubLang>? autoSub = (List<SubLang>?)video.AutomaticCaptions.GetType().GetProperty(video.Language)!.GetValue(video.AutomaticCaptions);
         if (autoSub == null) return;
-        SubLang? srt = autoSub.Find(i => i.Ext == "srt");
+        await GetSubsInner(autoSub,subtitles,subPath);
+    }
+
+    private async Task GetSubsInner(List<SubLang> lang,IEnumerable<string> collection, string path)
+    {
+        SubLang? srt = lang.Find(i => i.Ext == "srt");
         if (srt == null) return;
         using var client = new HttpClient();
         using var subStream = await client.GetStreamAsync(srt.Url);
-        using var fileStream = File.Create(subPath);
+        using var fileStream = File.Create(path);
         await subStream.CopyToAsync(fileStream);
-        subtitles.Add(subPath);
+        if(collection is ConcurrentBag<string> bag)
+        {
+            bag.Add(path);
+        }
+        else
+        {
+            collection.Append(path);
+        }
     }
 
     private Process YtdlpFactory(string id)
