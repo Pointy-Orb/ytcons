@@ -231,7 +231,7 @@ public class VideoBlock : MenuBlock
 
     int pageOffset = 0;
 
-    static readonly char newline = Convert.ToChar("¤");
+    static readonly char newline = Convert.ToChar("\n");
 
     private bool CheckNeedsPage()
     {
@@ -426,22 +426,19 @@ public class VideoBlock : MenuBlock
     {
         var parsed = description;
         parsed = parsed.Replace("⭖", @"\⭖");
-        parsed = parsed.Replace("¤", @"\¤");
         parsed = parsed.Replace("⁒", @"\⁒");
         parsed = parsed.Replace("▷", @"\▷");
-        parsed = parsed.Replace("<br>", "¤");
-        parsed = parsed.Replace("<b>", "");
-        parsed = parsed.Replace("</b>", "");
-        linkNumber = Regex.Matches(parsed, "<a href=\"(.*?)\">").Count;
-        parsed = Regex.Replace(parsed, "<a href=\"(.*?)\">", "[⁒$1⭖] ");
+        //parsed = parsed.Replace("<br>", "¤");
+        linkNumber = Regex.Matches(parsed, "http.?://[^ {newline}⭖]+").Count;
         parsed = parsed.Replace("</a>", "");
         parsed = parsed.Replace("&apos;", @"'");
         parsed = parsed.Replace("&quot;", "\"");
         parsed = parsed.Replace("&amp;", "&");
         parsed = parsed.Replace("&nbsp;", " ");
-        parsed = Regex.Replace(parsed, @"(?<!\[⁒)http.?://[^ ¤]+(?!\])", "");
-        parsed = Regex.Replace(parsed, @"⁒https://www\.youtube\.com/watch\?v=([^&]+)&t=[^ ]+?", "▷$1");
-        parsed = Regex.Replace(parsed, @"⁒https://www\.youtube\.com/shorts/([^ ]+)", "▷$1");
+        parsed = Regex.Replace(parsed, @$"(http.?://[^ {newline}⭖]+)", "[⁒$1⭖]");
+        parsed = Regex.Replace(parsed, @"⁒https://www\.youtube\.com/watch\?v=([^& ⭖]+)(?:&t=[^ ⭖]+?)?", "▷$1");
+        parsed = Regex.Replace(parsed, @$"⁒https://youtu\.be/(.*)\?[^ {newline}⭖]+", "▷$1");
+        parsed = Regex.Replace(parsed, @"⁒https://www\.youtube\.com/shorts/([^ ⭖]+)", "▷$1");
         return parsed;
     }
 

@@ -4,7 +4,7 @@ namespace YTCons;
 
 #nullable disable
 // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
-public class A
+public class SubLang
 {
     [JsonProperty("ext")]
     public string Ext { get; set; }
@@ -15,707 +15,475 @@ public class A
     [JsonProperty("name")]
     public string Name { get; set; }
 }
-
-public class Aa
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ab
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Af
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ak
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Am
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ar
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class AutomaticCaptions
+public class Captions
 {
     [JsonProperty("ab")]
-    public List<Ab> Ab { get; } = new List<Ab>();
+    public List<SubLang> ab { get; } = new List<SubLang>();
 
     [JsonProperty("aa")]
-    public List<Aa> Aa { get; } = new List<Aa>();
+    public List<SubLang> aa { get; } = new List<SubLang>();
 
     [JsonProperty("af")]
-    public List<Af> Af { get; } = new List<Af>();
+    public List<SubLang> af { get; } = new List<SubLang>();
 
     [JsonProperty("ak")]
-    public List<Ak> Ak { get; } = new List<Ak>();
+    public List<SubLang> ak { get; } = new List<SubLang>();
 
     [JsonProperty("sq")]
-    public List<Sq> Sq { get; } = new List<Sq>();
+    public List<SubLang> sq { get; } = new List<SubLang>();
 
     [JsonProperty("am")]
-    public List<Am> Am { get; } = new List<Am>();
+    public List<SubLang> am { get; } = new List<SubLang>();
 
     [JsonProperty("ar")]
-    public List<Ar> Ar { get; } = new List<Ar>();
+    public List<SubLang> ar { get; } = new List<SubLang>();
 
     [JsonProperty("hy")]
-    public List<Hy> Hy { get; } = new List<Hy>();
+    public List<SubLang> hy { get; } = new List<SubLang>();
 
     [JsonProperty("as")]
-    public List<A> As { get; } = new List<A>();
+    public List<SubLang> ase { get; } = new List<SubLang>();
 
     [JsonProperty("ay")]
-    public List<Ay> Ay { get; } = new List<Ay>();
+    public List<SubLang> ay { get; } = new List<SubLang>();
 
     [JsonProperty("az")]
-    public List<Az> Az { get; } = new List<Az>();
+    public List<SubLang> az { get; } = new List<SubLang>();
 
     [JsonProperty("bn")]
-    public List<Bn> Bn { get; } = new List<Bn>();
+    public List<SubLang> bn { get; } = new List<SubLang>();
 
     [JsonProperty("ba")]
-    public List<Ba> Ba { get; } = new List<Ba>();
+    public List<SubLang> ba { get; } = new List<SubLang>();
 
     [JsonProperty("eu")]
-    public List<Eu> Eu { get; } = new List<Eu>();
+    public List<SubLang> eu { get; } = new List<SubLang>();
 
     [JsonProperty("be")]
-    public List<Be> Be { get; } = new List<Be>();
+    public List<SubLang> be { get; } = new List<SubLang>();
 
     [JsonProperty("bho")]
-    public List<Bho> Bho { get; } = new List<Bho>();
+    public List<SubLang> bho { get; } = new List<SubLang>();
 
     [JsonProperty("bs")]
-    public List<B> Bs { get; } = new List<B>();
+    public List<SubLang> bs { get; } = new List<SubLang>();
 
     [JsonProperty("br")]
-    public List<Br> Br { get; } = new List<Br>();
+    public List<SubLang> br { get; } = new List<SubLang>();
 
     [JsonProperty("bg")]
-    public List<Bg> Bg { get; } = new List<Bg>();
+    public List<SubLang> bg { get; } = new List<SubLang>();
 
     [JsonProperty("my")]
-    public List<My> My { get; } = new List<My>();
+    public List<SubLang> my { get; } = new List<SubLang>();
 
     [JsonProperty("ca")]
-    public List<Ca> Ca { get; } = new List<Ca>();
+    public List<SubLang> ca { get; } = new List<SubLang>();
 
     [JsonProperty("ceb")]
-    public List<Ceb> Ceb { get; } = new List<Ceb>();
+    public List<SubLang> ceb { get; } = new List<SubLang>();
 
     [JsonProperty("zh-Hans")]
-    public List<ZhHan> ZhHans { get; } = new List<ZhHan>();
+    public List<SubLang> zhhans { get; } = new List<SubLang>();
 
     [JsonProperty("zh-Hant")]
-    public List<ZhHant> ZhHant { get; } = new List<ZhHant>();
+    public List<SubLang> zhhant { get; } = new List<SubLang>();
 
     [JsonProperty("co")]
-    public List<Co> Co { get; } = new List<Co>();
+    public List<SubLang> co { get; } = new List<SubLang>();
 
     [JsonProperty("hr")]
-    public List<Hr> Hr { get; } = new List<Hr>();
+    public List<SubLang> hr { get; } = new List<SubLang>();
 
     [JsonProperty("cs")]
-    public List<C> Cs { get; } = new List<C>();
+    public List<SubLang> cs { get; } = new List<SubLang>();
 
     [JsonProperty("da")]
-    public List<Dum> Da { get; } = new List<Dum>();
+    public List<SubLang> da { get; } = new List<SubLang>();
 
     [JsonProperty("dv")]
-    public List<Dv> Dv { get; } = new List<Dv>();
+    public List<SubLang> dv { get; } = new List<SubLang>();
 
     [JsonProperty("nl")]
-    public List<Nl> Nl { get; } = new List<Nl>();
+    public List<SubLang> nl { get; } = new List<SubLang>();
 
     [JsonProperty("dz")]
-    public List<Dz> Dz { get; } = new List<Dz>();
-
-    [JsonProperty("en-orig")]
-    public List<EnOrig> EnOrig { get; } = new List<EnOrig>();
+    public List<SubLang> dz { get; } = new List<SubLang>();
 
     [JsonProperty("en")]
-    public List<En> En { get; } = new List<En>();
+    public List<SubLang> en { get; } = new List<SubLang>();
 
     [JsonProperty("eo")]
-    public List<Eo> Eo { get; } = new List<Eo>();
+    public List<SubLang> eo { get; } = new List<SubLang>();
 
     [JsonProperty("et")]
-    public List<Et> Et { get; } = new List<Et>();
+    public List<SubLang> et { get; } = new List<SubLang>();
 
     [JsonProperty("ee")]
-    public List<Ee> Ee { get; } = new List<Ee>();
+    public List<SubLang> ee { get; } = new List<SubLang>();
 
     [JsonProperty("fo")]
-    public List<Fo> Fo { get; } = new List<Fo>();
+    public List<SubLang> fo { get; } = new List<SubLang>();
 
     [JsonProperty("fj")]
-    public List<Fj> Fj { get; } = new List<Fj>();
+    public List<SubLang> fj { get; } = new List<SubLang>();
 
     [JsonProperty("fil")]
-    public List<Fil> Fil { get; } = new List<Fil>();
+    public List<SubLang> fil { get; } = new List<SubLang>();
 
     [JsonProperty("fi")]
-    public List<Fi> Fi { get; } = new List<Fi>();
+    public List<SubLang> fi { get; } = new List<SubLang>();
 
     [JsonProperty("fr")]
-    public List<Fr> Fr { get; } = new List<Fr>();
+    public List<SubLang> fr { get; } = new List<SubLang>();
 
     [JsonProperty("gaa")]
-    public List<Gaa> Gaa { get; } = new List<Gaa>();
+    public List<SubLang> gaa { get; } = new List<SubLang>();
 
     [JsonProperty("gl")]
-    public List<Gl> Gl { get; } = new List<Gl>();
+    public List<SubLang> gl { get; } = new List<SubLang>();
 
     [JsonProperty("lg")]
-    public List<Lg> Lg { get; } = new List<Lg>();
+    public List<SubLang> lg { get; } = new List<SubLang>();
 
     [JsonProperty("ka")]
-    public List<Ka> Ka { get; } = new List<Ka>();
+    public List<SubLang> ka { get; } = new List<SubLang>();
 
     [JsonProperty("de")]
-    public List<De> De { get; } = new List<De>();
+    public List<SubLang> de { get; } = new List<SubLang>();
 
     [JsonProperty("el")]
-    public List<El> El { get; } = new List<El>();
+    public List<SubLang> el { get; } = new List<SubLang>();
 
     [JsonProperty("gn")]
-    public List<Gn> Gn { get; } = new List<Gn>();
+    public List<SubLang> gn { get; } = new List<SubLang>();
 
     [JsonProperty("gu")]
-    public List<Gu> Gu { get; } = new List<Gu>();
+    public List<SubLang> gu { get; } = new List<SubLang>();
 
     [JsonProperty("ht")]
-    public List<Ht> Ht { get; } = new List<Ht>();
+    public List<SubLang> ht { get; } = new List<SubLang>();
 
     [JsonProperty("ha")]
-    public List<Ha> Ha { get; } = new List<Ha>();
+    public List<SubLang> ha { get; } = new List<SubLang>();
 
     [JsonProperty("haw")]
-    public List<Haw> Haw { get; } = new List<Haw>();
+    public List<SubLang> haw { get; } = new List<SubLang>();
 
     [JsonProperty("iw")]
-    public List<Iw> Iw { get; } = new List<Iw>();
+    public List<SubLang> iw { get; } = new List<SubLang>();
 
     [JsonProperty("hi")]
-    public List<Hi> Hi { get; } = new List<Hi>();
+    public List<SubLang> hi { get; } = new List<SubLang>();
 
     [JsonProperty("hmn")]
-    public List<Hmn> Hmn { get; } = new List<Hmn>();
+    public List<SubLang> hmn { get; } = new List<SubLang>();
 
     [JsonProperty("hu")]
-    public List<Hu> Hu { get; } = new List<Hu>();
+    public List<SubLang> hu { get; } = new List<SubLang>();
 
     [JsonProperty("is")]
-    public List<Is> Is { get; } = new List<Is>();
+    public List<SubLang> isl { get; } = new List<SubLang>();
 
     [JsonProperty("ig")]
-    public List<Ig> Ig { get; } = new List<Ig>();
+    public List<SubLang> ig { get; } = new List<SubLang>();
 
     [JsonProperty("id")]
-    public List<Id> Id { get; } = new List<Id>();
+    public List<SubLang> id { get; } = new List<SubLang>();
 
     [JsonProperty("iu")]
-    public List<Iu> Iu { get; } = new List<Iu>();
+    public List<SubLang> iu { get; } = new List<SubLang>();
 
     [JsonProperty("ga")]
-    public List<Ga> Ga { get; } = new List<Ga>();
+    public List<SubLang> ga { get; } = new List<SubLang>();
 
     [JsonProperty("it")]
-    public List<It> It { get; } = new List<It>();
+    public List<SubLang> it { get; } = new List<SubLang>();
 
     [JsonProperty("ja")]
-    public List<Ja> Ja { get; } = new List<Ja>();
+    public List<SubLang> ja { get; } = new List<SubLang>();
 
     [JsonProperty("jv")]
-    public List<Jv> Jv { get; } = new List<Jv>();
+    public List<SubLang> jv { get; } = new List<SubLang>();
 
     [JsonProperty("kl")]
-    public List<Kl> Kl { get; } = new List<Kl>();
+    public List<SubLang> kl { get; } = new List<SubLang>();
 
     [JsonProperty("kn")]
-    public List<Kn> Kn { get; } = new List<Kn>();
+    public List<SubLang> kn { get; } = new List<SubLang>();
 
     [JsonProperty("kk")]
-    public List<Kk> Kk { get; } = new List<Kk>();
+    public List<SubLang> kk { get; } = new List<SubLang>();
 
     [JsonProperty("kha")]
-    public List<Kha> Kha { get; } = new List<Kha>();
+    public List<SubLang> kha { get; } = new List<SubLang>();
 
     [JsonProperty("km")]
-    public List<Km> Km { get; } = new List<Km>();
+    public List<SubLang> km { get; } = new List<SubLang>();
 
     [JsonProperty("rw")]
-    public List<Rw> Rw { get; } = new List<Rw>();
+    public List<SubLang> rw { get; } = new List<SubLang>();
 
     [JsonProperty("ko")]
-    public List<Ko> Ko { get; } = new List<Ko>();
+    public List<SubLang> ko { get; } = new List<SubLang>();
 
     [JsonProperty("kri")]
-    public List<Kri> Kri { get; } = new List<Kri>();
+    public List<SubLang> kri { get; } = new List<SubLang>();
 
     [JsonProperty("ku")]
-    public List<Ku> Ku { get; } = new List<Ku>();
+    public List<SubLang> ku { get; } = new List<SubLang>();
 
     [JsonProperty("ky")]
-    public List<Ky> Ky { get; } = new List<Ky>();
+    public List<SubLang> ky { get; } = new List<SubLang>();
 
     [JsonProperty("lo")]
-    public List<Lo> Lo { get; } = new List<Lo>();
+    public List<SubLang> lo { get; } = new List<SubLang>();
 
     [JsonProperty("la")]
-    public List<La> La { get; } = new List<La>();
+    public List<SubLang> la { get; } = new List<SubLang>();
 
     [JsonProperty("lv")]
-    public List<Lv> Lv { get; } = new List<Lv>();
+    public List<SubLang> lv { get; } = new List<SubLang>();
 
     [JsonProperty("ln")]
-    public List<Ln> Ln { get; } = new List<Ln>();
+    public List<SubLang> ln { get; } = new List<SubLang>();
 
     [JsonProperty("lt")]
-    public List<Lt> Lt { get; } = new List<Lt>();
+    public List<SubLang> lt { get; } = new List<SubLang>();
 
     [JsonProperty("lua")]
-    public List<Lua> Lua { get; } = new List<Lua>();
+    public List<SubLang> lua { get; } = new List<SubLang>();
 
     [JsonProperty("luo")]
-    public List<Luo> Luo { get; } = new List<Luo>();
+    public List<SubLang> luo { get; } = new List<SubLang>();
 
     [JsonProperty("lb")]
-    public List<Lb> Lb { get; } = new List<Lb>();
+    public List<SubLang> lb { get; } = new List<SubLang>();
 
     [JsonProperty("mk")]
-    public List<Mk> Mk { get; } = new List<Mk>();
+    public List<SubLang> mk { get; } = new List<SubLang>();
 
     [JsonProperty("mg")]
-    public List<Mg> Mg { get; } = new List<Mg>();
+    public List<SubLang> mg { get; } = new List<SubLang>();
 
     [JsonProperty("ms")]
-    public List<M> Ms { get; } = new List<M>();
+    public List<SubLang> ms { get; } = new List<SubLang>();
 
     [JsonProperty("ml")]
-    public List<Ml> Ml { get; } = new List<Ml>();
+    public List<SubLang> ml { get; } = new List<SubLang>();
 
     [JsonProperty("mt")]
-    public List<Mt> Mt { get; } = new List<Mt>();
+    public List<SubLang> mt { get; } = new List<SubLang>();
 
     [JsonProperty("gv")]
-    public List<Gv> Gv { get; } = new List<Gv>();
+    public List<SubLang> gv { get; } = new List<SubLang>();
 
     [JsonProperty("mi")]
-    public List<Mi> Mi { get; } = new List<Mi>();
+    public List<SubLang> mi { get; } = new List<SubLang>();
 
     [JsonProperty("mr")]
-    public List<Mr> Mr { get; } = new List<Mr>();
+    public List<SubLang> mr { get; } = new List<SubLang>();
 
     [JsonProperty("mn")]
-    public List<Mn> Mn { get; } = new List<Mn>();
+    public List<SubLang> mn { get; } = new List<SubLang>();
 
     [JsonProperty("mfe")]
-    public List<Mfe> Mfe { get; } = new List<Mfe>();
+    public List<SubLang> mfe { get; } = new List<SubLang>();
 
     [JsonProperty("ne")]
-    public List<Ne> Ne { get; } = new List<Ne>();
+    public List<SubLang> ne { get; } = new List<SubLang>();
 
     [JsonProperty("new")]
-    public List<New> New { get; } = new List<New>();
+    public List<SubLang> nwa { get; } = new List<SubLang>();
 
     [JsonProperty("nso")]
-    public List<Nso> Nso { get; } = new List<Nso>();
+    public List<SubLang> nso { get; } = new List<SubLang>();
 
     [JsonProperty("no")]
-    public List<No> No { get; } = new List<No>();
+    public List<SubLang> no { get; } = new List<SubLang>();
 
     [JsonProperty("ny")]
-    public List<Ny> Ny { get; } = new List<Ny>();
+    public List<SubLang> ny { get; } = new List<SubLang>();
 
     [JsonProperty("oc")]
-    public List<Oc> Oc { get; } = new List<Oc>();
+    public List<SubLang> oc { get; } = new List<SubLang>();
 
     [JsonProperty("or")]
-    public List<Or> Or { get; } = new List<Or>();
+    public List<SubLang> or { get; } = new List<SubLang>();
 
     [JsonProperty("om")]
-    public List<Om> Om { get; } = new List<Om>();
+    public List<SubLang> om { get; } = new List<SubLang>();
 
     [JsonProperty("os")]
-    public List<O> Os { get; } = new List<O>();
+    public List<SubLang> os { get; } = new List<SubLang>();
 
     [JsonProperty("pam")]
-    public List<Pam> Pam { get; } = new List<Pam>();
+    public List<SubLang> pam { get; } = new List<SubLang>();
 
     [JsonProperty("ps")]
-    public List<P> Ps { get; } = new List<P>();
+    public List<SubLang> ps { get; } = new List<SubLang>();
 
     [JsonProperty("fa")]
-    public List<Fa> Fa { get; } = new List<Fa>();
+    public List<SubLang> fa { get; } = new List<SubLang>();
 
     [JsonProperty("pl")]
-    public List<Pl> Pl { get; } = new List<Pl>();
+    public List<SubLang> pl { get; } = new List<SubLang>();
 
     [JsonProperty("pt")]
-    public List<Pt> Pt { get; } = new List<Pt>();
+    public List<SubLang> pt { get; } = new List<SubLang>();
 
     [JsonProperty("pt-PT")]
-    public List<PtPT> PtPT { get; } = new List<PtPT>();
+    public List<SubLang> ptpt { get; } = new List<SubLang>();
 
     [JsonProperty("pa")]
-    public List<Pa> Pa { get; } = new List<Pa>();
+    public List<SubLang> pa { get; } = new List<SubLang>();
 
     [JsonProperty("qu")]
-    public List<Qu> Qu { get; } = new List<Qu>();
+    public List<SubLang> qu { get; } = new List<SubLang>();
 
     [JsonProperty("ro")]
-    public List<Ro> Ro { get; } = new List<Ro>();
+    public List<SubLang> ro { get; } = new List<SubLang>();
 
     [JsonProperty("rn")]
-    public List<Rn> Rn { get; } = new List<Rn>();
+    public List<SubLang> rn { get; } = new List<SubLang>();
 
     [JsonProperty("ru")]
-    public List<Ru> Ru { get; } = new List<Ru>();
+    public List<SubLang> ru { get; } = new List<SubLang>();
 
     [JsonProperty("sm")]
-    public List<Sm> Sm { get; } = new List<Sm>();
+    public List<SubLang> sm { get; } = new List<SubLang>();
 
     [JsonProperty("sg")]
-    public List<Sg> Sg { get; } = new List<Sg>();
+    public List<SubLang> sg { get; } = new List<SubLang>();
 
     [JsonProperty("sa")]
-    public List<Sa> Sa { get; } = new List<Sa>();
+    public List<SubLang> sa { get; } = new List<SubLang>();
 
     [JsonProperty("gd")]
-    public List<Gd> Gd { get; } = new List<Gd>();
+    public List<SubLang> gd { get; } = new List<SubLang>();
 
     [JsonProperty("sr")]
-    public List<Sr> Sr { get; } = new List<Sr>();
+    public List<SubLang> sr { get; } = new List<SubLang>();
 
     [JsonProperty("crs")]
-    public List<Cr> Crs { get; } = new List<Cr>();
+    public List<SubLang> crs { get; } = new List<SubLang>();
 
     [JsonProperty("sn")]
-    public List<Sn> Sn { get; } = new List<Sn>();
+    public List<SubLang> sn { get; } = new List<SubLang>();
 
     [JsonProperty("sd")]
-    public List<Sd> Sd { get; } = new List<Sd>();
+    public List<SubLang> sd { get; } = new List<SubLang>();
 
     [JsonProperty("si")]
-    public List<Si> Si { get; } = new List<Si>();
+    public List<SubLang> si { get; } = new List<SubLang>();
 
     [JsonProperty("sk")]
-    public List<Sk> Sk { get; } = new List<Sk>();
+    public List<SubLang> sk { get; } = new List<SubLang>();
 
     [JsonProperty("sl")]
-    public List<Sl> Sl { get; } = new List<Sl>();
+    public List<SubLang> sl { get; } = new List<SubLang>();
 
     [JsonProperty("so")]
-    public List<So> So { get; } = new List<So>();
+    public List<SubLang> so { get; } = new List<SubLang>();
 
     [JsonProperty("st")]
-    public List<St> St { get; } = new List<St>();
+    public List<SubLang> st { get; } = new List<SubLang>();
 
     [JsonProperty("es")]
-    public List<E> Es { get; } = new List<E>();
+    public List<SubLang> es { get; } = new List<SubLang>();
 
     [JsonProperty("su")]
-    public List<Su> Su { get; } = new List<Su>();
+    public List<SubLang> su { get; } = new List<SubLang>();
 
     [JsonProperty("sw")]
-    public List<Sw> Sw { get; } = new List<Sw>();
+    public List<SubLang> sw { get; } = new List<SubLang>();
 
     [JsonProperty("ss")]
-    public List<Ss> Ss { get; } = new List<Ss>();
+    public List<SubLang> ss { get; } = new List<SubLang>();
 
     [JsonProperty("sv")]
-    public List<Sv> Sv { get; } = new List<Sv>();
+    public List<SubLang> sv { get; } = new List<SubLang>();
 
     [JsonProperty("tg")]
-    public List<Tg> Tg { get; } = new List<Tg>();
+    public List<SubLang> tg { get; } = new List<SubLang>();
 
     [JsonProperty("ta")]
-    public List<Tum> Ta { get; } = new List<Tum>();
+    public List<SubLang> ta { get; } = new List<SubLang>();
 
     [JsonProperty("tt")]
-    public List<Tt> Tt { get; } = new List<Tt>();
+    public List<SubLang> tt { get; } = new List<SubLang>();
 
     [JsonProperty("te")]
-    public List<Te> Te { get; } = new List<Te>();
+    public List<SubLang> te { get; } = new List<SubLang>();
 
     [JsonProperty("th")]
-    public List<Th> Th { get; } = new List<Th>();
+    public List<SubLang> th { get; } = new List<SubLang>();
 
     [JsonProperty("bo")]
-    public List<Bo> Bo { get; } = new List<Bo>();
+    public List<SubLang> bo { get; } = new List<SubLang>();
 
     [JsonProperty("ti")]
-    public List<Ti> Ti { get; } = new List<Ti>();
+    public List<SubLang> ti { get; } = new List<SubLang>();
 
     [JsonProperty("to")]
-    public List<To> To { get; } = new List<To>();
+    public List<SubLang> to { get; } = new List<SubLang>();
 
     [JsonProperty("ts")]
-    public List<T> Ts { get; } = new List<T>();
+    public List<SubLang> ts { get; } = new List<SubLang>();
 
     [JsonProperty("tn")]
-    public List<Tn> Tn { get; } = new List<Tn>();
+    public List<SubLang> tn { get; } = new List<SubLang>();
 
     [JsonProperty("tum")]
-    public List<Tum> Tum { get; } = new List<Tum>();
+    public List<SubLang> tum { get; } = new List<SubLang>();
 
     [JsonProperty("tr")]
-    public List<Tr> Tr { get; } = new List<Tr>();
+    public List<SubLang> tr { get; } = new List<SubLang>();
 
     [JsonProperty("tk")]
-    public List<Tk> Tk { get; } = new List<Tk>();
+    public List<SubLang> tk { get; } = new List<SubLang>();
 
     [JsonProperty("uk")]
-    public List<Uk> Uk { get; } = new List<Uk>();
+    public List<SubLang> uk { get; } = new List<SubLang>();
 
     [JsonProperty("ur")]
-    public List<Ur> Ur { get; } = new List<Ur>();
+    public List<SubLang> ur { get; } = new List<SubLang>();
 
     [JsonProperty("ug")]
-    public List<Ug> Ug { get; } = new List<Ug>();
+    public List<SubLang> ug { get; } = new List<SubLang>();
 
     [JsonProperty("uz")]
-    public List<Uz> Uz { get; } = new List<Uz>();
+    public List<SubLang> uz { get; } = new List<SubLang>();
 
     [JsonProperty("ve")]
-    public List<Ve> Ve { get; } = new List<Ve>();
+    public List<SubLang> ve { get; } = new List<SubLang>();
 
     [JsonProperty("vi")]
-    public List<Vi> Vi { get; } = new List<Vi>();
+    public List<SubLang> vi { get; } = new List<SubLang>();
 
     [JsonProperty("war")]
-    public List<War> War { get; } = new List<War>();
+    public List<SubLang> war { get; } = new List<SubLang>();
 
     [JsonProperty("cy")]
-    public List<Cy> Cy { get; } = new List<Cy>();
+    public List<SubLang> cy { get; } = new List<SubLang>();
 
     [JsonProperty("fy")]
-    public List<Fy> Fy { get; } = new List<Fy>();
+    public List<SubLang> fy { get; } = new List<SubLang>();
 
     [JsonProperty("wo")]
-    public List<Wo> Wo { get; } = new List<Wo>();
+    public List<SubLang> wo { get; } = new List<SubLang>();
 
     [JsonProperty("xh")]
-    public List<Xh> Xh { get; } = new List<Xh>();
+    public List<SubLang> xh { get; } = new List<SubLang>();
 
     [JsonProperty("yi")]
-    public List<Yi> Yi { get; } = new List<Yi>();
+    public List<SubLang> yi { get; } = new List<SubLang>();
 
     [JsonProperty("yo")]
-    public List<Yo> Yo { get; } = new List<Yo>();
+    public List<SubLang> yo { get; } = new List<SubLang>();
 
     [JsonProperty("zu")]
-    public List<Zu> Zu { get; } = new List<Zu>();
-}
-
-public class Ay
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Az
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class B
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ba
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Be
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Bg
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Bho
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Bn
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Bo
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Br
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class C
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ca
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ceb
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
+    public List<SubLang> zu { get; } = new List<SubLang>();
 }
 
 public class Chapter
@@ -730,250 +498,10 @@ public class Chapter
     public double? EndTime { get; set; }
 }
 
-public class Co
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Cr
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Cy
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class De
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
 public class DownloaderOptions
 {
     [JsonProperty("http_chunk_size")]
     public int? HttpChunkSize { get; set; }
-}
-
-public class Dum
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Dv
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Dz
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class E
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ee
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class El
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class En
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class EnOrig
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Eo
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Et
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Eu
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Fa
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Fi
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Fil
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Fj
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Fo
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
 }
 
 public class FormatData
@@ -1084,18 +612,6 @@ public class FormatData
     public string DynamicRange { get; set; }
 }
 
-public class Fr
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
 public class Fragment
 {
     [JsonProperty("url")]
@@ -1103,174 +619,6 @@ public class Fragment
 
     [JsonProperty("duration")]
     public double? Duration { get; set; }
-}
-
-public class Fy
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ga
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Gaa
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Gd
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Gl
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Gn
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Gu
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Gv
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ha
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Haw
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Hi
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Hmn
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Hr
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ht
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
 }
 
 public class HttpHeaders
@@ -1286,702 +634,6 @@ public class HttpHeaders
 
     [JsonProperty("Sec-Fetch-Mode")]
     public string SecFetchMode { get; set; }
-}
-
-public class Hu
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Hy
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Id
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ig
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Is
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class It
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Iu
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Iw
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ja
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Jv
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ka
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Kha
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Kk
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Kl
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Km
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Kn
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ko
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Kri
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ku
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ky
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class La
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Lb
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Lg
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ln
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Lo
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Lt
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Lua
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Luo
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Lv
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class M
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Mfe
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Mg
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Mi
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Mk
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ml
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Mn
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Mr
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Mt
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class My
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ne
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class New
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Nl
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class No
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Nso
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ny
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class O
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Oc
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Om
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Or
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class P
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Pa
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Pam
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Pl
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Pt
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class PtPT
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Qu
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Rn
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ro
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
 }
 
 public class VideoData
@@ -2041,10 +693,10 @@ public class VideoData
     public List<string> FormatSortFields { get; } = new List<string>();
 
     [JsonProperty("automatic_captions")]
-    public AutomaticCaptions AutomaticCaptions { get; set; }
+    public Captions AutomaticCaptions { get; set; }
 
     [JsonProperty("subtitles")]
-    public Subtitles Subtitles { get; set; }
+    public Captions Subtitles { get; set; }
 
     [JsonProperty("comment_count")]
     public int? CommentCount { get; set; }
@@ -2179,274 +831,6 @@ public class VideoData
     public VersionData Version { get; set; }
 }
 
-public class Ru
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Rw
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sa
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sd
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sg
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Si
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sk
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sl
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sm
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sn
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class So
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sq
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sr
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ss
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class St
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Su
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Subtitles
-{
-}
-
-public class Sv
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Sw
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class T
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Te
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Tg
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Th
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
 public class Thumbnail
 {
     [JsonProperty("url")]
@@ -2467,163 +851,6 @@ public class Thumbnail
     [JsonProperty("resolution")]
     public string Resolution { get; set; }
 }
-
-public class Ti
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Tk
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Tn
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class To
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Tr
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Tt
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Tum
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Tum2
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ug
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Uk
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ur
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Uz
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Ve
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
 public class VersionData
 {
     [JsonProperty("version")]
@@ -2631,112 +858,4 @@ public class VersionData
 
     [JsonProperty("repository")]
     public string Repository { get; set; }
-}
-
-public class Vi
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class War
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Wo
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Xh
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Yi
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Yo
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class ZhHan
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class ZhHant
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-}
-
-public class Zu
-{
-    [JsonProperty("ext")]
-    public string Ext { get; set; }
-
-    [JsonProperty("url")]
-    public string Url { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
 }
