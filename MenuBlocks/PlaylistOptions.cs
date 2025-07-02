@@ -38,7 +38,7 @@ public class PlaylistOptions : MenuBlock
         {
             playlistOption.option = Globals.BeautifyPlaylistName(newName);
         }
-        if (playlistOption.childMenu != null)
+        if (playlistOption!.childMenu != null)
         {
             foreach (MenuOption option in playlistOption.childMenu.options)
             {
@@ -103,7 +103,7 @@ public class PlaylistOptions : MenuBlock
         var listRaw = await File.ReadAllTextAsync(option.extraData);
         var list = JsonConvert.DeserializeObject<List<string>>(listRaw);
         list.Remove(videoInfo.id);
-        menu.options.RemoveAll(i => i.option == videoInfo.video.title);
+        menu.options.RemoveAll(i => i.option == videoInfo.video.Title);
         var listJson = JsonConvert.SerializeObject(list);
         await File.WriteAllTextAsync(option.extraData, listJson);
         Globals.activeScene.PopMenu();
@@ -114,12 +114,12 @@ public class PlaylistOptions : MenuBlock
                 menu.cursor = menu.options.Count - 1;
             }
             menu.options[menu.cursor].selected = true;
-            LoadBar.WriteLog($"Video \"{videoInfo.video.title}\" was removed from playlist.");
+            LoadBar.WriteLog($"Video \"{videoInfo.video.Title}\" was removed from playlist.");
         }
         else
         {
             RemovePlaylistInner(option.extraData, Globals.activeScene.menus.Reverse().First());
-            LoadBar.WriteLog($"Video \"{videoInfo.video.title}\" was removed from playlist. Empty playlist was removed");
+            LoadBar.WriteLog($"Video \"{videoInfo.video.Title}\" was removed from playlist. Empty playlist was removed");
         }
     }
 }

@@ -9,7 +9,7 @@ public class DescriptionVideo : Scene
         var instance = new DescriptionVideo(id);
         var info = await ExtractedVideoInfo.CreateAsync(id);
         MenuBlock block = new();
-        block.options.Add(new MenuOption(info.video.title, block, () => Globals.activeScene.PushMenuAsync(new VideoBlock(info))));
+        block.options.Add(new MenuOption(info.video.Title, block, () => Globals.activeScene.PushMenuAsync(new VideoBlock(info))));
         block.options.Add(new MenuOption("Back", block, () => Task.Run(() => Globals.scenes.Pop())));
         block.options[block.cursor].selected = true;
         instance.PushMenu(block);

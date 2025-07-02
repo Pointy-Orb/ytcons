@@ -27,7 +27,7 @@ public static class Globals
         noCheckStream = args.Contains("--no-check-stream");
         LoadBar.loadMessage = "Getting available sites";
         LoadBar.visible = true;
-        await ExtractedVideoInfo.GetSites();
+        //await ExtractedVideoInfo.GetSites();
         LoadBar.visible = false;
         Console.ResetColor();
         defaultForeground = Console.ForegroundColor;

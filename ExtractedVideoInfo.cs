@@ -3,26 +3,22 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml;
 using System.Diagnostics;
-using System.Net;
+using YoutubeDLSharp;
+using YoutubeDLSharp.Metadata;
+//using System.Net;
 using Newtonsoft.Json;
 
 namespace YTCons;
 
 public class ExtractedVideoInfo
 {
-    private static string bestSite = "pipedapi.reallyaweso.me";
-    private const string instances = "https://raw.githubusercontent.com/TeamPiped/documentation/refs/heads/main/content/docs/public-instances/index.md";
-    public static List<string> sites = new();
-    public List<VideoStream> validStreams = new();
-    private const string searchFormat = "/streams/";
     private static readonly HttpClient client = new HttpClient
     {
         Timeout = TimeSpan.FromSeconds(10)
     };
-    private static bool gotSitesOffline = false;
 
     public readonly string id;
-    public Video video = new Video();
+    public VideoData video = null!;
     public bool gotVideo = false;
     public bool windowOpen = false;
     public bool playing { get; private set; }
@@ -31,6 +27,7 @@ public class ExtractedVideoInfo
 
     internal static bool gotSites = false;
 
+    /*
     private static void SetBestSite(string site)
     {
         bestSite = site;
@@ -130,11 +127,13 @@ public class ExtractedVideoInfo
             Globals.Exit(1);
         }
     }
+    */
 
     public static async Task<ExtractedVideoInfo> CreateAsync(string id)
     {
         var instance = new ExtractedVideoInfo(id);
         await instance.Init();
+        instance.gotVideo = true;
         return instance;
     }
 
@@ -150,13 +149,39 @@ public class ExtractedVideoInfo
 
     async Task Init()
     {
-        LoadBar.loadMessageDebug = "Starting process";
-        video = await Main(id);
-        LoadBar.loadMessageDebug = "Converting subtitles";
-        gotVideo = true;
-        await ConvertSubs();
+        if (!File.Exists(Dirs.VideoInfoJson(id)))
+        {
+            var ytdlp = YtdlpFactory(id);
+            ytdlp.StartInfo.Arguments += " --write-info-json";
+            ytdlp.StartInfo.Arguments += " --skip-download";
+            ytdlp.Start();
+            await ytdlp.WaitForExitAsync();
+        }
+        try
+        {
+            var jsonVidData = await File.ReadAllTextAsync(Dirs.VideoInfoJson(id));
+            video = JsonConvert.DeserializeObject<VideoData>(jsonVidData);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Exception: " + ex.Message);
+            throw;
+        }
+        //await ConvertSubs();
     }
 
+    private Process YtdlpFactory(string id)
+    {
+        var process = new Process();
+        process.StartInfo.FileName = Dirs.GetPathApp("yt-dlp");
+        process.StartInfo.Arguments = $"{id} -o {Path.Combine(Dirs.VideoIdFolder(id), id + ".webm")}";
+        process.StartInfo.RedirectStandardError = true;
+        process.StartInfo.RedirectStandardInput = true;
+        process.StartInfo.RedirectStandardOutput = true;
+        return process;
+    }
+
+    /*
     async Task ConvertSubs()
     {
         Directory.CreateDirectory(Path.Combine(Settings.permasaveSubtitles ? Path.Combine(Dirs.localDir, "subtitles") : Path.GetTempPath(), id));
@@ -196,11 +221,11 @@ public class ExtractedVideoInfo
         var xmlSubs = new XmlDocument();
         xmlSubs.LoadXml(xmlSubsRaw);
         List<(string begin, string end, string value)> subs = new();
-        foreach (XmlNode node in xmlSubs.DocumentElement.ChildNodes[1].ChildNodes[0].ChildNodes)
+        foreach (XmlNode node in xmlSubs.DocumentElement!.ChildNodes[1]!.ChildNodes[0]!.ChildNodes)
         {
             if (node.Name == "p")
             {
-                subs.Add((node.Attributes["begin"].Value, node.Attributes["end"].Value, node.InnerText));
+                subs.Add((node.Attributes!["begin"]!.Value, node.Attributes!["end"]!.Value, node.InnerText));
             }
             if (cancel.IsCancellationRequested)
             {
@@ -315,7 +340,7 @@ public class ExtractedVideoInfo
             if (File.Exists(Path.Combine(Dirs.VideoIdFolder(id), "validStreams.json")))
             {
                 var validStreamsRaw = await File.ReadAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "validStreams.json"));
-                validStreams = JsonConvert.DeserializeObject<List<VideoStream>>(validStreamsRaw);
+                validStreams = JsonConvert.DeserializeObject<List<VideoStream>>(validStreamsRaw)!;
             }
             else
             {
@@ -337,6 +362,8 @@ public class ExtractedVideoInfo
                 return fileTempVideo;
             }
         }
+        var youtube = new YoutubeClient();
+        var video = await youtube.Videos.GetAsync(id);
         Dictionary<Task, string> taskWithSite = new();
         Video tempVideo;
         string? json = null;
@@ -429,7 +456,8 @@ public class ExtractedVideoInfo
             {
                 gotSitesOffline = false;
                 await GetSites();
-                await Main(id);
+                tempVideo = await Main(id);
+                return tempVideo;
             }
             Console.SetCursorPosition(0, Console.CursorTop);
             Console.WriteLine($"Usable mirror could not be found. Try again later.");
@@ -451,31 +479,17 @@ public class ExtractedVideoInfo
         using var testResponse = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
         return testResponse.IsSuccessStatusCode;
     }
+    */
 
-    private bool ValidateStream(VideoStream stream)
-    {
-        if (Globals.noCheckStream) return true;
-        using var request = new HttpRequestMessage(HttpMethod.Head, stream.url);
-        using var testResponse = client.Send(request, HttpCompletionOption.ResponseHeadersRead);
-        return testResponse.IsSuccessStatusCode;
-    }
-
-    public async Task Play(string format = "MPEG_4", string quality = "720p")
+    public async Task Play(string format = "mp4", string resolution = "720p")
     {
         mediaPlayer = new();
         mediaPlayer.StartInfo.FileName = Dirs.GetPathApp("mpv");
-        VideoStream bestStream = validStreams[0];
-        foreach (VideoStream stream in validStreams)
+        FormatData? videoStream = video.Formats.Where(i => i.FormatNote == resolution).Where(i => i.Acodec == "none").ToList().Find(i => i.Ext == format);
+        FormatData? audioStream = video.Formats.Where(i => i.AudioChannels != null).ToList().Find(i => i.Vcodec == "none");
+        if (videoStream == null)
         {
-            if (stream.format == format && stream.quality == quality)
-            {
-                bestStream = stream;
-                if (Globals.debug)
-                {
-                    File.WriteAllText(Path.GetTempPath() + "debugStream.txt", stream.url);
-                }
-                break;
-            }
+            videoStream = video.Formats.Where(i => i.Protocol == "https").Where(i => i.AudioChannels == null).ToList().Find(i => i.Vcodec != "none");
         }
         string subsAsArg = "";
         string delimiter = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ";" : ":";
@@ -487,7 +501,7 @@ public class ExtractedVideoInfo
                 subsAsArg += delimiter;
             }
         }
-        mediaPlayer.StartInfo.Arguments = $"--sub-files=\"{subsAsArg}\" \"{bestStream.url}\" --audio-file=\"{video.audioStreams[0].url}\" --title=\"{video.title} | {video.uploader}\"";
+        mediaPlayer.StartInfo.Arguments = $"{(subsAsArg == "" ? "" : "--sub-files=")}\"{subsAsArg}\" \"{videoStream.Url}\" --audio-file=\"{audioStream.Url}\" --title=\"{video.Title} | {video.Channel}\"";
         playing = true;
         try
         {
@@ -502,14 +516,15 @@ public class ExtractedVideoInfo
 
     public string ParsedDuration()
     {
-        int minutes = video.duration / 60;
+        if (video.Duration == null) return "";
+        int minutes = (int)video.Duration / 60;
         if (minutes < 60)
         {
-            return $"{minutes}:{video.duration % 60}";
+            return $"{minutes}:{(int)video.Duration % 60}";
         }
         else
         {
-            return $"{minutes / 60}:{minutes % 60}:{video.duration % 60}";
+            return $"{minutes / 60}:{minutes % 60}:{(int)video.Duration % 60}";
         }
     }
 }

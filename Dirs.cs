@@ -133,4 +133,13 @@ public static class Dirs
         Directory.CreateDirectory(path);
         return path;
     }
+
+    internal static string VideoInfoJson(string id)
+    {
+        if (File.Exists(Path.Combine(VideoIdFolder(id), id + ".webm.info.json")))
+        {
+            File.Move(Path.Combine(VideoIdFolder(id), id + ".webm.info.json"), Path.Combine(VideoIdFolder(id), id + ".info.json"));
+        }
+        return Path.Combine(VideoIdFolder(id), id + ".info.json");
+    }
 }

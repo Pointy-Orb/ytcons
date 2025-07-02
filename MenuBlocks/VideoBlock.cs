@@ -53,10 +53,10 @@ public class VideoBlock : MenuBlock
         ChangeWindowSize();
     }
 
-    private string Ratio(int num1, int num2)
+    private string Ratio(long num1, long num2)
     {
         if (num1 == num2) return "1:1";
-        int biggerNum = num1 > num2 ? num1 : num2;
+        long biggerNum = num1 > num2 ? num1 : num2;
         var gcd = 1;
         for (int i = 1; i < biggerNum / 2; i++)
         {
@@ -74,14 +74,15 @@ public class VideoBlock : MenuBlock
 
     private string MakeExtraData()
     {
-        StringBuilder extraDataBuilder = new("👁 Views: ");
-        extraDataBuilder.Append(videoInfo.video.views.ToString("N0") + "  │  👍 Likes: ");
-        extraDataBuilder.Append(videoInfo.video.likes.ToString("N0") + $"  {Ratio(videoInfo.video.likes, videoInfo.video.dislikes)}  👎 Dislikes: ");
-        extraDataBuilder.Append(videoInfo.video.dislikes.ToString("N0"));
-        extraDataBuilder.Append("  │📺 Channel: " + (videoInfo.video.uploaderVerified ? "✔️" : "") + videoInfo.video.uploader);
-        extraDataBuilder.Append($" (目 Subs: {videoInfo.video.uploaderSubscriberCount.ToString("N0")})");
-        extraDataBuilder.Append($"  │ 𐁗  Uploaded on {videoInfo.video.uploadDate.ToString()}");
-        extraDataBuilder.Append("  │ 🕓 Duration: " + videoInfo.ParsedDuration());
+        StringBuilder extraDataBuilder = new();
+        extraDataBuilder.Append("👁 Views: " + videoInfo.video.ViewCount.ToString());
+        extraDataBuilder.Append("  │  👍 Likes: " + videoInfo.video.LikeCount.ToString());
+        //It's not included in the metadata so there's no way to know :'(
+        //extraDataBuilder.Append(" 👎 DisikeCount: " + videoInfo.video.DislikeCount.ToString());
+        extraDataBuilder.Append("  │📺 Channel: " + videoInfo.video.Uploader + (videoInfo.video.ChannelIsVerified != null && (bool)videoInfo.video.ChannelIsVerified ? "" : " ✔"));
+        extraDataBuilder.Append($" (目 Subs: {videoInfo.video.ChannelFollowerCount.ToString()})");
+        extraDataBuilder.Append($"  │ 𐁗  Uploaded on {videoInfo.video.UploadDate}");
+        extraDataBuilder.Append("  │ 🕓 Duration: " + videoInfo.video.DurationString);
         return extraDataBuilder.ToString();
     }
 
@@ -94,7 +95,7 @@ public class VideoBlock : MenuBlock
         }
         else if (Dirs.TryGetPathApp("ffmpeg") != null)
         {
-            options.Add(new MenuOption("Download", this, () => Task.Run(() => Globals.activeScene.PushMenu(new ChooseResolution(videoInfo, "MPEG_4", true)))));
+            options.Add(new MenuOption("Download", this, () => Task.Run(() => Globals.activeScene.PushMenu(new ChooseResolution(videoInfo, "mp4", true)))));
         }
         options.Add(new MenuOption("Add To Playlist", this, () => Task.Run(() => Globals.activeScene.PushMenu(new AddToPlaylist(videoInfo)))));
         options.Add(new MenuOption("Show Description", this, () => Task.Run(() =>
@@ -122,7 +123,7 @@ public class VideoBlock : MenuBlock
             Globals.activeScene.PushMenu(confirmDownload);
         })));
         options[cursor].selected = true;
-        return ParseDescription(videoInfo.video.description).ToCharArray();
+        return ParseDescription(videoInfo.video.Description).ToCharArray();
     }
 
     private async Task PlayAsync()
@@ -144,8 +145,8 @@ public class VideoBlock : MenuBlock
         using var image = new MagickImage(webp);
         var thumbnailDownloadPath = Path.Combine(Dirs.downloadsDir, "thumbnails");
         Directory.CreateDirectory(thumbnailDownloadPath);
-        image.Write(Path.Combine(thumbnailDownloadPath, $"{Dirs.MakeFileSafe(videoInfo.video.title, true)}.png"));
-        LoadBar.WriteLog($"Thumbnail downloaded to {Path.Combine(thumbnailDownloadPath, $"{videoInfo.video.title.Replace(":", ",")}.png")}");
+        image.Write(Path.Combine(thumbnailDownloadPath, $"{Dirs.MakeFileSafe(videoInfo.video.Title, true)}.png"));
+        LoadBar.WriteLog($"Thumbnail downloaded to {Path.Combine(thumbnailDownloadPath, $"{videoInfo.video.Title}.png")}");
         Globals.activeScene.PopMenu();
     }
 
@@ -153,7 +154,7 @@ public class VideoBlock : MenuBlock
     {
         using (HttpClient client = new HttpClient())
         {
-            var thumbnailUrl = new Uri(videoInfo.video.thumbnailUrl);
+            var thumbnailUrl = new Uri(videoInfo.video.Thumbnails.Last().Url);
             byte[] thumbnailBytes = await client.GetByteArrayAsync(thumbnailUrl);
             await File.WriteAllBytesAsync(thumbnailPath, thumbnailBytes);
         }

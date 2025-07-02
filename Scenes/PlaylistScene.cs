@@ -53,7 +53,7 @@ public class PlaylistScene : Scene
         removeOption.ChangeOnSelected(() => PlaylistOptions.RemoveVideo(removeOption, menu, video.videoInfo));
         removeOption.extraData = path;
         video.options.Insert(3, removeOption);
-        menu.options.Add(new MenuOption(video.videoInfo.video.title, menu, () => PushMenuAsync(video), video));
+        menu.options.Add(new MenuOption(video.videoInfo.video.Title, menu, () => PushMenuAsync(video), video));
         if (menu.options.Count() >= 10) menu.grayUnselected = true;
         finishedVideos++;
     }

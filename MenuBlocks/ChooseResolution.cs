@@ -1,6 +1,7 @@
 using Iso639;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using YoutubeDLSharp.Metadata;
 
 namespace YTCons.MenuBlocks;
 
@@ -14,23 +15,26 @@ public class ChooseResolution : MenuBlock
     {
         this.info = info;
         this.chosenFormat = chosenFormat;
-        List<string> resolutions = new List<string>();
-        foreach (VideoStream stream in info.video.videoStreams)
+        List<string> qualities = new();
+        foreach (FormatData format in info.video.Formats.Where(i => i.Protocol == "https").Where(i => i.Vcodec != "none"))
         {
-            if (!resolutions.Contains(stream.quality) && stream.format == chosenFormat)
+            if (format.FormatNote == "") continue;
+            if (!qualities.Contains(format.FormatNote))
             {
-                resolutions.Add(stream.quality);
+                qualities.Add(format.FormatNote);
             }
         }
-        foreach (string resolution in resolutions)
+        foreach (string quality in qualities)
         {
-            options.Add(new MenuOption(resolution, this, download ? () => Download(resolution) : () => Play(resolution)));
+            options.Add(new MenuOption(quality, this, download ? () => Download(quality) : () => Play(quality)));
         }
         options[cursor].selected = true;
     }
 
-    private async Task Download(string resolution)
+    private async Task Download(string quality)
     {
+        /*
+        IOU for download impementation with new library
         if (Globals.debug)
         {
             Console.Write(info.subtitles);
@@ -121,12 +125,13 @@ public class ChooseResolution : MenuBlock
         Globals.activeScene.PopMenu();
         Globals.activeScene.PopMenu();
         LoadBar.WriteLog($"Video \"{info.video.title}\" was downloaded to {Dirs.downloadsDir}.");
+        */
     }
 
-    private async Task Play(string resolution)
+    private async Task Play(string quality)
     {
         active = false;
-        await info.Play(chosenFormat, resolution);
+        await info.Play(chosenFormat, quality);
         inactiveBecausePlaying = true;
     }
 

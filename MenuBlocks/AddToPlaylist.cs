@@ -45,7 +45,7 @@ public class AddToPlaylist : MenuBlock
             removeOption.ChangeOnSelected(() => PlaylistOptions.RemoveVideo(removeOption, affectedList.childMenu, video.videoInfo));
             removeOption.extraData = path;
             video.options.Insert(3, removeOption);
-            affectedList.childMenu.options.Add(new MenuOption(info.video.title, affectedList.childMenu, () => Task.Run(() => Globals.activeScene.PushMenu(video))));
+            affectedList.childMenu.options.Add(new MenuOption(info.video.Title, affectedList.childMenu, () => Task.Run(() => Globals.activeScene.PushMenu(video))));
         }
     }
 
@@ -89,7 +89,7 @@ public class AddToPlaylist : MenuBlock
             //Manually add the ability to remove the video from the playlist
             var videoBlock = new VideoBlock(info);
             var videoTitleBlock = new MenuBlock(AnchorType.Cursor);
-            videoTitleBlock.options.Add(new MenuOption(info.video.title, videoTitleBlock, () => Task.Run(() => Globals.activeScene.PushMenu(videoBlock))));
+            videoTitleBlock.options.Add(new MenuOption(info.video.Title, videoTitleBlock, () => Task.Run(() => Globals.activeScene.PushMenu(videoBlock))));
 
             videoTitleBlock.options[videoTitleBlock.cursor].selected = true;
             videoBlock.options[videoBlock.cursor].selected = true;
