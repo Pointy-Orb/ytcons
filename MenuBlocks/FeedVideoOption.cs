@@ -87,6 +87,8 @@ public class FeedVideoOption : MenuOption
         return instance;
     }
 
+    private readonly char newline = Convert.ToChar("\n");
+
     protected override void PostDraw(int i, int j)
     {
         if (!feedData.read)
@@ -99,6 +101,122 @@ public class FeedVideoOption : MenuOption
         }
     }
 
+    public override void PostDrawEverything()
+    {
+        if(!selected || parent.confirmed) return;
+        int descriptionCharacter = 0;
+        int linkIndex = 0;
+        ConsoleColor? foreground = null;
+        ConsoleColor? background = null;
+        var desc = feedData.description.ToCharArray();
+        List<char> softDesc = desc.ToList();
+        desc = softDesc.ToArray();
+        for (int l = Console.WindowTop; l < Console.WindowHeight; l++)
+        {
+            bool newLining = false;
+            for (int k = Console.WindowLeft; k < Console.WindowWidth; k++)
+            {
+                if (!InWindow(k, l)) continue;
+                try
+                {
+                    Globals.activeScene.protectedTile[k, l] = true;
+                }
+                catch { }
+                if (newLining || descriptionCharacter >= desc.Length)
+                {
+                    Globals.ClearTile(k, l);
+                    continue;
+                }
+                if (descriptionCharacter >= desc.Length) continue;
+                if (desc[descriptionCharacter] == newline && Globals.CheckNoEscape(descriptionCharacter, desc))
+                {
+                    Globals.Write(k, l, Convert.ToChar(" "));
+                    descriptionCharacter++;
+                    newLining = true;
+                    continue;
+                }
+                if (desc[descriptionCharacter] == Convert.ToChar("⁒") || desc[descriptionCharacter] == Convert.ToChar("▷") && Globals.CheckNoEscape(descriptionCharacter, desc))
+                {
+                    var red = false;
+                    linkIndex++;
+                    if (desc[descriptionCharacter] == Convert.ToChar("▷"))
+                    {
+                        foreground = ConsoleColor.Red;
+                        red = true;
+                    }
+                    else
+                    {
+                        foreground = ConsoleColor.Blue;
+                    }
+                    Globals.Write(k, l, Convert.ToChar(red ? "⏵" : "⇱"));
+                    Globals.SetForegroundColor(k, l, (ConsoleColor)foreground);
+                    descriptionCharacter++;
+                    continue;
+                }
+                else if (desc[descriptionCharacter] == Convert.ToChar("⭖") && Globals.CheckNoEscape(descriptionCharacter, desc))
+                {
+                    foreground = null;
+                    background = null;
+                    Globals.Write(k, l, Convert.ToChar(" "));
+                    descriptionCharacter++;
+                    continue;
+                }
+                if (foreground != null)
+                {
+                    Globals.SetForegroundColor(k, l, (ConsoleColor)foreground);
+                }
+                else
+                {
+                    Globals.SetForegroundColor(k, l, Globals.defaultForeground);
+                }
+                if (background != null)
+                {
+                    Globals.SetBackgroundColor(k, l, (ConsoleColor)background);
+                }
+                if (desc[descriptionCharacter] != Convert.ToChar(" "))
+                {
+                    for (int m = descriptionCharacter; m < desc.Length; m++)
+                    {
+                        if (desc[l] == Convert.ToChar(" "))
+                        {
+                            if (m - descriptionCharacter >= windowWidth)
+                            {
+                                newLining = false;
+                            }
+                            break;
+                        }
+                        if (!InWindow(k + m - descriptionCharacter, m))
+                        {
+                            newLining = true;
+                        }
+                    }
+                }
+                if (newLining) continue;
+                if (descriptionCharacter == 0)
+                {
+                    Globals.Write(k, l, desc[descriptionCharacter]);
+                }
+                else if (descriptionCharacter != Convert.ToChar(@"\"))
+                {
+                    Globals.Write(k, l, desc[descriptionCharacter]);
+                }
+                descriptionCharacter++;
+            }
+        }
+    }
+
+    int windowWidth = 0;
+
+    private bool InWindow(int i, int j)
+    {
+        var xPos = Console.WindowWidth - i;
+        windowWidth = Console.WindowWidth / 3;
+        if(xPos == Console.WindowWidth/3)
+        {
+            Globals.Write(i,j,"│ ");
+        }
+        return xPos < Console.WindowWidth/3;
+    }
 
     private void OperationsAfterDataGot()
     {

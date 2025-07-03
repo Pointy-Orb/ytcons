@@ -303,4 +303,17 @@ public static class Globals
     {
         return Path.GetFileNameWithoutExtension(path).Replace("_", " ");
     }
+
+    public static bool CheckNoEscape(int descriptionCharacter, char[] desc)
+    {
+        if (descriptionCharacter - 1 < 0)
+        {
+            return true;
+        }
+        else if (desc[descriptionCharacter - 1] != Convert.ToChar(@"\"))
+        {
+            return true;
+        }
+        return false;
+    }
 }

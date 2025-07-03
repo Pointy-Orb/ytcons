@@ -18,6 +18,17 @@ public class ChooseFormat : MenuBlock
         {
             options.Add(new MenuOption(format.ToString(), this, () => Globals.activeScene.PushMenuAsync(new ChooseResolution(videoInfo, format, dowloading))));
         }
+        if(dowloading)
+        {
+            options.Add(new MenuOption("Audio Only",this, () => DownloadAudio(videoInfo)));
+        }
         options[cursor].selected = true;
+    }
+
+    private async Task DownloadAudio(ExtractedVideoInfo videoInfo)
+    {
+        await videoInfo.Download("mp3","144p");
+        Globals.activeScene.PopMenu();
+        Globals.activeScene.PopMenu();
     }
 }

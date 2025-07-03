@@ -53,25 +53,6 @@ public class VideoBlock : MenuBlock
         ChangeWindowSize();
     }
 
-    private string Ratio(long num1, long num2)
-    {
-        if (num1 == num2) return "1:1";
-        long biggerNum = num1 > num2 ? num1 : num2;
-        var gcd = 1;
-        for (int i = 1; i < biggerNum / 2; i++)
-        {
-            if (num1 % i == 0 && num2 % i == 0)
-            {
-                gcd = i;
-            }
-        }
-        if (gcd == 1)
-        {
-            return "";
-        }
-        return $"{num1 / gcd}:{num2 / gcd}";
-    }
-
     private string MakeExtraData()
     {
         StringBuilder extraDataBuilder = new();
@@ -319,14 +300,14 @@ public class VideoBlock : MenuBlock
                     continue;
                 }
                 if (descriptionCharacter >= desc.Length) continue;
-                if (desc[descriptionCharacter] == newline && CheckNoEscape(descriptionCharacter, desc))
+                if (desc[descriptionCharacter] == newline && Globals.CheckNoEscape(descriptionCharacter, desc))
                 {
                     Globals.Write(i, j, Convert.ToChar(" "));
                     descriptionCharacter++;
                     newLining = true;
                     continue;
                 }
-                if (desc[descriptionCharacter] == Convert.ToChar("⁒") || desc[descriptionCharacter] == Convert.ToChar("▷") && CheckNoEscape(descriptionCharacter, desc))
+                if (desc[descriptionCharacter] == Convert.ToChar("⁒") || desc[descriptionCharacter] == Convert.ToChar("▷") && Globals.CheckNoEscape(descriptionCharacter, desc))
                 {
                     var red = false;
                     linkIndex++;
@@ -354,7 +335,7 @@ public class VideoBlock : MenuBlock
                     descriptionCharacter++;
                     continue;
                 }
-                else if (desc[descriptionCharacter] == Convert.ToChar("⭖") && CheckNoEscape(descriptionCharacter, desc))
+                else if (desc[descriptionCharacter] == Convert.ToChar("⭖") && Globals.CheckNoEscape(descriptionCharacter, desc))
                 {
                     foreground = null;
                     background = null;
@@ -404,19 +385,6 @@ public class VideoBlock : MenuBlock
                 descriptionCharacter++;
             }
         }
-    }
-
-    public static bool CheckNoEscape(int descriptionCharacter, char[] desc)
-    {
-        if (descriptionCharacter - 1 < 0)
-        {
-            return true;
-        }
-        else if (desc[descriptionCharacter - 1] != Convert.ToChar(@"\"))
-        {
-            return true;
-        }
-        return false;
     }
 
     int linkNumber = 0;
@@ -604,16 +572,16 @@ public class VideoBlock : MenuBlock
             string curLink = "";
             for (int i = 0; i < sourceDesc.Length; i++)
             {
-                if (markingLink && !(sourceDesc[i] == Convert.ToChar("⁒") || sourceDesc[i] == Convert.ToChar("▷") || sourceDesc[i] == Convert.ToChar("⭖")) && CheckNoEscape(i, sourceDesc))
+                if (markingLink && !(sourceDesc[i] == Convert.ToChar("⁒") || sourceDesc[i] == Convert.ToChar("▷") || sourceDesc[i] == Convert.ToChar("⭖")) && Globals.CheckNoEscape(i, sourceDesc))
                 {
                     curLink += sourceDesc[i];
                 }
-                if ((sourceDesc[i] == Convert.ToChar("⁒") || sourceDesc[i] == Convert.ToChar("▷")) && CheckNoEscape(i, sourceDesc))
+                if ((sourceDesc[i] == Convert.ToChar("⁒") || sourceDesc[i] == Convert.ToChar("▷")) && Globals.CheckNoEscape(i, sourceDesc))
                 {
                     markingLink = true;
                     curLink = "";
                 }
-                else if (sourceDesc[i] == Convert.ToChar("⭖") && CheckNoEscape(i, sourceDesc))
+                else if (sourceDesc[i] == Convert.ToChar("⭖") && Globals.CheckNoEscape(i, sourceDesc))
                 {
                     markingLink = false;
                     links.Add(curLink);

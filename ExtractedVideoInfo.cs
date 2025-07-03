@@ -48,7 +48,7 @@ public class ExtractedVideoInfo
 
     async Task Init()
     {
-        if (!File.Exists(Dirs.VideoInfoJson(id)))
+        if (!File.Exists(Dirs.VideoInfoJson(id)) || DateTime.Now - File.GetCreationTime(Dirs.VideoInfoJson(id)) > TimeSpan.FromHours(2))
         {
             var ytdlp = YtdlpFactory(id);
             ytdlp.StartInfo.Arguments += " --write-info-json";
@@ -82,26 +82,17 @@ public class ExtractedVideoInfo
 
     private async Task GetManualSubs()
     {
-        PropertyInfo[] langs = video.Subtitles.GetType().GetProperties();
         ConcurrentBag<string> pathBag = new();
         List<Task> subTasks = new();
-        foreach(PropertyInfo lang in langs)
+        foreach(string lang in video.Subtitles.Keys)
         {
-            var language = lang.Name;
-            if (language == "as") language = "ase";
-            if (language == "is") language = "isl";
-            if (language == "new") language = "nwa";
-            var nullLang = video.Subtitles.GetType().GetProperty(language);
-            if(nullLang == null) continue;
-            var langList = (List<SubLang>?)nullLang.GetValue(video.Subtitles);
-            if(langList == null || langList.Count() < 1) continue;
-            var subPath = Path.Combine(Dirs.VideoIdFolder(id), Dirs.MakeFileSafe(langList[0].Name,true,true)+ $".{language}.srt");
+            var subPath = Path.Combine(Dirs.VideoIdFolder(id), Dirs.MakeFileSafe(video.Subtitles[lang][0].Name,true,true)+ $".{lang}.srt");
             if (File.Exists(subPath))
             {
                 subtitles.Add(subPath);
                 continue;
             }
-            subTasks.Add(GetSubsInner(langList,pathBag,subPath));
+            subTasks.Add(GetSubsInner(video.Subtitles[lang],pathBag,subPath));
         }
         if(subTasks.Count() <= 0) return;
 
@@ -115,24 +106,25 @@ public class ExtractedVideoInfo
     private async Task GetAutoSubs()
     {
         var language = video.Language;
+        if(language == null)
+        {
+            //TODO: Dynamically get language if null depending on system langauge
+            language = "en";
+        }
         var subPath = Path.Combine(Dirs.VideoIdFolder(id), language + $"-auto.{language}.srt");
-        //Some languages are problematic keywords. These were changed in the json but have to be accounted for in the live conversion
-        if (language == "as") language = "ase";
-        if (language == "is") language = "isl";
-        if (language == "new") language = "nwa";
         if (File.Exists(subPath))
         {
             subtitles.Add(subPath);
             return;
         }
-        List<SubLang>? autoSub = (List<SubLang>?)video.AutomaticCaptions.GetType().GetProperty(video.Language)!.GetValue(video.AutomaticCaptions);
+        string? autoSub = video.AutomaticCaptions.Keys.ToList().Find(i => i.Contains(language));
         if (autoSub == null) return;
-        await GetSubsInner(autoSub,subtitles,subPath);
+        await GetSubsInner(video.AutomaticCaptions[autoSub],subtitles,subPath);
     }
 
-    private async Task GetSubsInner(List<SubLang> lang,IEnumerable<string> collection, string path)
+    private async Task GetSubsInner(SubLang[] lang,IEnumerable<string> collection, string path)
     {
-        SubLang? srt = lang.Find(i => i.Ext == "srt");
+        SubLang? srt = lang.ToList().Find(i => i.Ext == "srt");
         if (srt == null) return;
         using var client = new HttpClient();
         using var subStream = await client.GetStreamAsync(srt.Url);
@@ -202,6 +194,12 @@ public class ExtractedVideoInfo
             Console.Write(subtitles);
         }
         var targetPath = $"{Path.Combine(Dirs.downloadsDir, Dirs.MakeFileSafe(video.Title))}.{format}";
+        if(format == "mp3")
+        {
+            var targetFolder = Path.Combine(Dirs.downloadsDir,"music");
+            Directory.CreateDirectory(targetFolder);
+            targetPath = Path.Combine(targetFolder,$"{Dirs.MakeFileSafe(video.Title)}.{format}");
+        }
         var targetPathNoSub = $"{Path.Combine(Dirs.downloadsDir, Dirs.MakeFileSafe(video.Title))}-noSub.{(format == "MPEG_4" ? "mp4" : format.ToLower())}";
         if (File.Exists(targetPath))
         {
@@ -218,7 +216,9 @@ public class ExtractedVideoInfo
             {
                 fps = null;
             }
-            ytdlp.StartInfo.Arguments = $"-P {Dirs.downloadsDir} {(format == "mp4" ? "-f mp4" : "")} -o \"{video.Title}{(Dirs.TryGetPathApp("ffmpeg") != null && subtitles.Count() > 0 ? "-noSub" : "")}.{format}\" -S \"res:{formattedResolution}{(fps == null ? "" : ",fps:" + fps)}\" {id}";
+            var resolutionStuff = $"-S \"res:{formattedResolution}{(fps == null ? "" : ",fps:" + fps)}\"";
+            if(format == "mp3") resolutionStuff = "";
+            ytdlp.StartInfo.Arguments = $"-P {(format == "mp3" ? Path.Combine(Dirs.downloadsDir,"music") : Dirs.downloadsDir)} {(format == "webm" ? "" : $"-t {format}")} -o \"{Dirs.MakeFileSafe(video.Title)}{(Dirs.TryGetPathApp("ffmpeg") != null && subtitles.Count() > 0 && format != "mp3" ? "-noSub" : "")}.{format}\" {resolutionStuff} {id}";
             if (Globals.debug)
             {
                 Console.WriteLine(ytdlp.StartInfo.Arguments);
@@ -230,7 +230,7 @@ public class ExtractedVideoInfo
                 Console.Clear();
             }
         }
-        if (Dirs.TryGetPathApp("ffmpeg") != null && subtitles.Count() > 0)
+        if (Dirs.TryGetPathApp("ffmpeg") != null && subtitles.Count() > 0 && format != "mp3")
         {
             var ffmpeg = new Process();
             var subInput = "";
@@ -243,7 +243,7 @@ public class ExtractedVideoInfo
                 {
                     subMaps += $"-map {i + 1} ";
                 }
-                var twoLetterCode = Regex.Match(subtitles[i], @"\w+\.(.*?)\.srt").Groups[1].Value;
+                var twoLetterCode = Regex.Match(subtitles[i], @".*?\.([^\.-]+).*?\.srt").Groups[1].Value;
                 var language = Language.FromPart1(twoLetterCode);
                 var threeLetterCode = language == null ? twoLetterCode : language.Part2;
                 subMetadata += $"-metadata:s:s:{i} language={threeLetterCode} ";
@@ -270,9 +270,10 @@ public class ExtractedVideoInfo
         }
         Globals.activeScene.PopMenu();
         Globals.activeScene.PopMenu();
-        if (File.Exists(Path.Combine(Dirs.downloadsDir, $"{video.Title}.{format}")))
+        if (File.Exists(targetPath))
         {
-            LoadBar.WriteLog($"Video \"{video.Title}\" was downloaded to {Dirs.downloadsDir}.");
+            var prelude = format == "mp3" ? "Audio track" : "Video";
+            LoadBar.WriteLog($"{prelude} \"{video.Title}\" was downloaded to {(format == "mp3" ? Path.Combine(Dirs.downloadsDir,"music") : Dirs.downloadsDir)}.");
         }
         else
         {

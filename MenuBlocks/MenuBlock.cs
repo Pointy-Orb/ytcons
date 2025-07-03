@@ -172,6 +172,10 @@ public class MenuBlock
             Array.Clear(Globals.activeScene.protectedTile, 0, Globals.activeScene.protectedTile.Length);
         }
         PostDraw();
+        foreach(MenuOption option in options)
+        {
+            option.PostDrawEverything();
+        }
     }
 
     protected virtual void PostDraw()

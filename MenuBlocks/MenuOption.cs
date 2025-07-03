@@ -71,6 +71,8 @@ public class MenuOption
     protected virtual void PostDraw(int i, int j)
     { }
 
+    public virtual void PostDrawEverything() {}
+
     protected virtual void PreDraw(int i, int j) { }
 
     private int DivideWithPowers(int n, int d)

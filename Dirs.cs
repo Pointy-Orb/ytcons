@@ -103,6 +103,7 @@ public static class Dirs
         string output = input
             .Replace(":", "꞉")
             .Replace("..", ". .")
+            .Replace("\"", "''")
             .Replace("/", "⧸");
         if (input == " ")
         {
@@ -120,7 +121,6 @@ public static class Dirs
                 .Replace("?", "？")
                 .Replace("*", "꘎")
                 .Replace("|", "∣")
-                .Replace("\"", "''")
                 .Replace("<", "＜")
                 .Replace(">", "＞");
         }
@@ -138,6 +138,12 @@ public static class Dirs
     {
         if (File.Exists(Path.Combine(VideoIdFolder(id), id + ".webm.info.json")))
         {
+            //The stream links expire, so every now and then they need to be updated. But the File.Move method will throw an error if the destination already exists
+            //So we have to make sure that it doesn't  >:)
+            if(File.Exists(Path.Combine(VideoIdFolder(id), id + ".info.json")))
+            {
+                File.Delete(Path.Combine(VideoIdFolder(id), id + ".info.json"));
+            }
             File.Move(Path.Combine(VideoIdFolder(id), id + ".webm.info.json"), Path.Combine(VideoIdFolder(id), id + ".info.json"));
         }
         return Path.Combine(VideoIdFolder(id), id + ".info.json");
