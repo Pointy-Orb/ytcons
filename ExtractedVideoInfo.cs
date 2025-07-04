@@ -84,20 +84,21 @@ public class ExtractedVideoInfo
     {
         ConcurrentBag<string> pathBag = new();
         List<Task> subTasks = new();
-        foreach(string lang in video.Subtitles.Keys)
+        foreach (string lang in video.Subtitles.Keys)
         {
-            var subPath = Path.Combine(Dirs.VideoIdFolder(id), Dirs.MakeFileSafe(video.Subtitles[lang][0].Name,true,true)+ $".{lang}.srt");
+            if (video.Subtitles[lang][0].Name == null) continue;
+            var subPath = Path.Combine(Dirs.VideoIdFolder(id), Dirs.MakeFileSafe(video.Subtitles[lang][0].Name, true, true) + $".{lang}.srt");
             if (File.Exists(subPath))
             {
                 subtitles.Add(subPath);
                 continue;
             }
-            subTasks.Add(GetSubsInner(video.Subtitles[lang],pathBag,subPath));
+            subTasks.Add(GetSubsInner(video.Subtitles[lang], pathBag, subPath));
         }
-        if(subTasks.Count() <= 0) return;
+        if (subTasks.Count() <= 0) return;
 
         await Task.WhenAll(subTasks);
-        foreach(string path in pathBag)
+        foreach (string path in pathBag)
         {
             subtitles.Add(path);
         }
@@ -106,7 +107,7 @@ public class ExtractedVideoInfo
     private async Task GetAutoSubs()
     {
         var language = video.Language;
-        if(language == null)
+        if (language == null)
         {
             //TODO: Dynamically get language if null depending on system langauge
             language = "en";
@@ -119,10 +120,10 @@ public class ExtractedVideoInfo
         }
         string? autoSub = video.AutomaticCaptions.Keys.ToList().Find(i => i.Contains(language));
         if (autoSub == null) return;
-        await GetSubsInner(video.AutomaticCaptions[autoSub],subtitles,subPath);
+        await GetSubsInner(video.AutomaticCaptions[autoSub], subtitles, subPath);
     }
 
-    private async Task GetSubsInner(SubLang[] lang,IEnumerable<string> collection, string path)
+    private async Task GetSubsInner(SubLang[] lang, IEnumerable<string> collection, string path)
     {
         SubLang? srt = lang.ToList().Find(i => i.Ext == "srt");
         if (srt == null) return;
@@ -130,7 +131,7 @@ public class ExtractedVideoInfo
         using var subStream = await client.GetStreamAsync(srt.Url);
         using var fileStream = File.Create(path);
         await subStream.CopyToAsync(fileStream);
-        if(collection is ConcurrentBag<string> bag)
+        if (collection is ConcurrentBag<string> bag)
         {
             bag.Add(path);
         }
@@ -178,6 +179,7 @@ public class ExtractedVideoInfo
         playing = true;
         try
         {
+            Console.Clear();
             mediaPlayer.Start();
             await mediaPlayer.WaitForExitAsync();
         }
@@ -194,11 +196,11 @@ public class ExtractedVideoInfo
             Console.Write(subtitles);
         }
         var targetPath = $"{Path.Combine(Dirs.downloadsDir, Dirs.MakeFileSafe(video.Title))}.{format}";
-        if(format == "mp3")
+        if (format == "mp3")
         {
-            var targetFolder = Path.Combine(Dirs.downloadsDir,"music");
+            var targetFolder = Path.Combine(Dirs.downloadsDir, "music");
             Directory.CreateDirectory(targetFolder);
-            targetPath = Path.Combine(targetFolder,$"{Dirs.MakeFileSafe(video.Title)}.{format}");
+            targetPath = Path.Combine(targetFolder, $"{Dirs.MakeFileSafe(video.Title)}.{format}");
         }
         var targetPathNoSub = $"{Path.Combine(Dirs.downloadsDir, Dirs.MakeFileSafe(video.Title))}-noSub.{(format == "MPEG_4" ? "mp4" : format.ToLower())}";
         if (File.Exists(targetPath))
@@ -217,12 +219,13 @@ public class ExtractedVideoInfo
                 fps = null;
             }
             var resolutionStuff = $"-S \"res:{formattedResolution}{(fps == null ? "" : ",fps:" + fps)}\"";
-            if(format == "mp3") resolutionStuff = "";
-            ytdlp.StartInfo.Arguments = $"-P {(format == "mp3" ? Path.Combine(Dirs.downloadsDir,"music") : Dirs.downloadsDir)} {(format == "webm" ? "" : $"-t {format}")} -o \"{Dirs.MakeFileSafe(video.Title)}{(Dirs.TryGetPathApp("ffmpeg") != null && subtitles.Count() > 0 && format != "mp3" ? "-noSub" : "")}.{format}\" {resolutionStuff} {id}";
+            if (format == "mp3") resolutionStuff = "";
+            ytdlp.StartInfo.Arguments = $"-P {(format == "mp3" ? Path.Combine(Dirs.downloadsDir, "music") : Dirs.downloadsDir)} {(format == "webm" ? "" : $"-t {format}")} -o \"{Dirs.MakeFileSafe(video.Title)}{(Dirs.TryGetPathApp("ffmpeg") != null && subtitles.Count() > 0 && format != "mp3" ? "-noSub" : "")}.{format}\" {resolutionStuff} {id}";
             if (Globals.debug)
             {
                 Console.WriteLine(ytdlp.StartInfo.Arguments);
             }
+            Console.SetCursorPosition(0, Console.WindowHeight);
             ytdlp.Start();
             await ytdlp.WaitForExitAsync();
             if (!Globals.debug)
@@ -273,7 +276,7 @@ public class ExtractedVideoInfo
         if (File.Exists(targetPath))
         {
             var prelude = format == "mp3" ? "Audio track" : "Video";
-            LoadBar.WriteLog($"{prelude} \"{video.Title}\" was downloaded to {(format == "mp3" ? Path.Combine(Dirs.downloadsDir,"music") : Dirs.downloadsDir)}.");
+            LoadBar.WriteLog($"{prelude} \"{video.Title}\" was downloaded to {(format == "mp3" ? Path.Combine(Dirs.downloadsDir, "music") : Dirs.downloadsDir)}.");
         }
         else
         {

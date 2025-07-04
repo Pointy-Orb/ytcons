@@ -1,11 +1,14 @@
 TODO:
 Iron out kinks with paged description
 Allow viewing of channel pages
-Integrate RSS feed
 Allow viewing of comments section
 Add settings
+Make RSS feed able to actually save a feed
+Find a way to get drawing support for Japanese characters to work
+Add the ability to make and destroy folders
 
 DOING:
+Integrate RSS feed
 
 
 DONE:

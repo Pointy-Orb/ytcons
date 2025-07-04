@@ -7,48 +7,68 @@ public class FeedVideoOption : MenuOption
 {
     public class FeedData
     {
-        public string description = "";
-        public string id = "";
-        public string title = "";
-        public string channelId = "";
-        public DateTime published = new DateTime();
-        public bool read = false;
+        public string description { get; set; } = "";
+        public string id { get; set; } = "";
+        public string title { get; set; } = "";
+        public string channelId { get; set; } = "";
+        public DateTime published { get; set; } = new DateTime();
+        public bool read { get; set; } = false;
     }
 
     public FeedData feedData = new();
 
-    public static async Task<FeedVideoOption> CreateAsync(MenuBlock parent, Stream source, int index)
+    public bool DontDisplayUnread
     {
+        get
+        {
+            if (parent is FeedChannelMenu channel)
+            {
+                return channel.lowPriority || feedData.read;
+            }
+            return false;
+        }
+    }
+
+    public static async Task<List<FeedVideoOption>> CreateGroupAsync(MenuBlock parent, string sourceLink)
+    {
+        using var client = new HttpClient();
+        using var source = await client.GetStreamAsync(sourceLink);
+        List<FeedVideoOption> instances = new();
         FeedVideoOption instance = new FeedVideoOption("", parent);
         var settings = new XmlReaderSettings();
         settings.Async = true;
         using (XmlReader reader = XmlReader.Create(source, settings))
         {
-            int i = 0;
             bool observingNode = false;
+            bool skipObserve = false;
             while (await reader.ReadAsync())
             {
                 if (reader.NodeType == XmlNodeType.EndElement && reader.LocalName == "entry" && observingNode)
                 {
-                    //No reason to keep iterating if we already exhausted the contents of the node we want to observe.
                     observingNode = false;
-                    break;
+                    if (File.Exists(instance.GetJsonPath()))
+                    {
+                        var data = await File.ReadAllTextAsync(instance.GetJsonPath());
+                        instance.feedData = JsonConvert.DeserializeObject<FeedData>(data);
+                    }
+                    else
+                    {
+                        var instanceJson = JsonConvert.SerializeObject(instance.feedData);
+                        await File.WriteAllTextAsync(instance.GetJsonPath(), instanceJson);
+                    }
+                    instance.OperationsAfterDataGot();
+                    instances.Add(instance);
                 }
                 if (reader.NodeType != XmlNodeType.Element) continue;
 
-                //Iterate until we find the contents of the node we want to observe.
                 if (reader.LocalName == "entry")
                 {
-                    if (i != index)
-                    {
-                        i++;
-                        continue;
-                    }
+                    instance = new FeedVideoOption("", parent);
                     observingNode = true;
                     continue;
                 }
 
-                if (!observingNode) continue;
+                if (!observingNode || skipObserve) continue;
                 //Actually get the data.
                 if (reader.Name == "yt:videoId")
                 {
@@ -73,25 +93,14 @@ public class FeedVideoOption : MenuOption
                 }
             }
         }
-        if (File.Exists(instance.GetJsonPath()))
-        {
-            string data = await File.ReadAllTextAsync(instance.GetJsonPath());
-            instance.feedData = JsonConvert.DeserializeObject<FeedData>(data);
-        }
-        else
-        {
-            var instanceJson = JsonConvert.SerializeObject(instance.feedData);
-            await File.WriteAllTextAsync(instance.GetJsonPath(), instanceJson);
-        }
-        instance.OperationsAfterDataGot();
-        return instance;
+        return instances;
     }
 
     private readonly char newline = Convert.ToChar("\n");
 
     protected override void PostDraw(int i, int j)
     {
-        if (!feedData.read)
+        if (!DontDisplayUnread)
         {
             int selectedOffset = selected && parent.confirmed ? 2 : 0;
             for (int l = i + 5 + selectedOffset; l < i + 11 + selectedOffset; l++)
@@ -103,7 +112,7 @@ public class FeedVideoOption : MenuOption
 
     public override void PostDrawEverything()
     {
-        if(!selected || parent.confirmed) return;
+        if (!selected || parent.confirmed) return;
         int descriptionCharacter = 0;
         int linkIndex = 0;
         ConsoleColor? foreground = null;
@@ -211,16 +220,21 @@ public class FeedVideoOption : MenuOption
     {
         var xPos = Console.WindowWidth - i;
         windowWidth = Console.WindowWidth / 3;
-        if(xPos == Console.WindowWidth/3)
+        if (xPos == Console.WindowWidth / 3)
         {
-            Globals.Write(i,j,"│ ");
+            Globals.Write(i, j, "│ ");
         }
-        return xPos < Console.WindowWidth/3;
+        return xPos < Console.WindowWidth / 3;
     }
 
     private void OperationsAfterDataGot()
     {
-        option = $"{(feedData.read ? "" : "(unread) ")}{feedData.title}";
+        UpdateReadStatus();
+    }
+
+    public void UpdateReadStatus()
+    {
+        option = $"{(DontDisplayUnread ? "" : "(unread) ")}{feedData.title}";
     }
 
     private FeedVideoOption(string option, MenuBlock parent) : base(option, parent, () => Task.Run(() => { }))
@@ -239,7 +253,7 @@ public class FeedVideoOption : MenuOption
             {
                 feedMenu.DecrementUnread();
             }
-            option = feedData.title;
+            UpdateReadStatus();
             var feedJson = JsonConvert.SerializeObject(feedData);
             await File.WriteAllTextAsync(GetJsonPath(), feedJson);
         }
@@ -257,7 +271,11 @@ public class FeedVideoOption : MenuOption
     {
         _onSelected = () => OpenVideo();
         string data = File.ReadAllText(path);
-        feedData = JsonConvert.DeserializeObject<FeedData>(data);
+        var settings = new JsonSerializerSettings
+        {
+            ObjectCreationHandling = ObjectCreationHandling.Replace
+        };
+        feedData = JsonConvert.DeserializeObject<FeedData>(data, settings);
         OperationsAfterDataGot();
     }
 }

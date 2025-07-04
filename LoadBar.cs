@@ -117,6 +117,11 @@ public static class LoadBar
         Console.Write(log);
     }
 
+    public static void WriteTip(string tip)
+    {
+        Globals.Write(0, Console.WindowHeight - 1, tip);
+    }
+
     public static void ClearLoad()
     {
         Console.SetCursorPosition(0, Console.WindowHeight);

@@ -2,10 +2,13 @@ namespace YTCons.MenuBlocks;
 
 public class MenuOption
 {
-    public int counter = 0;
+    public virtual int counter { get; set; } = 0;
     public bool useCounter = false;
 
     public string? extraData = null;
+
+    //Set this to not null to have a tip about the item display at the bottom of the screen
+    public string? tip = null;
 
     public bool selected = false;
 
@@ -71,11 +74,11 @@ public class MenuOption
     protected virtual void PostDraw(int i, int j)
     { }
 
-    public virtual void PostDrawEverything() {}
+    public virtual void PostDrawEverything() { }
 
     protected virtual void PreDraw(int i, int j) { }
 
-    private int DivideWithPowers(int n, int d)
+    public static int DivideWithPowers(int n, int d)
     {
         int divisor = d;
         int i = 0;
@@ -89,6 +92,10 @@ public class MenuOption
 
     public void Draw(int i, int j, int prevMenuOffset, out int nextMenuOffset)
     {
+        if (selected && !parent.confirmed && tip != null)
+        {
+            LoadBar.WriteTip(tip);
+        }
         drawX = i;
         drawY = j;
         if (selected)

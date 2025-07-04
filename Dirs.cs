@@ -84,7 +84,7 @@ public static class Dirs
         get
         {
             var feeds = Path.Combine(localDir, "feeds");
-            Directory.CreateDirectory(feeds);
+			Directory.CreateDirectory(feeds);
             return feeds;
         }
     }
@@ -140,7 +140,7 @@ public static class Dirs
         {
             //The stream links expire, so every now and then they need to be updated. But the File.Move method will throw an error if the destination already exists
             //So we have to make sure that it doesn't  >:)
-            if(File.Exists(Path.Combine(VideoIdFolder(id), id + ".info.json")))
+            if (File.Exists(Path.Combine(VideoIdFolder(id), id + ".info.json")))
             {
                 File.Delete(Path.Combine(VideoIdFolder(id), id + ".info.json"));
             }

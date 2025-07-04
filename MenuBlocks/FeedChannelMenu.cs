@@ -1,5 +1,6 @@
 using System.Xml;
 using Newtonsoft.Json;
+using System.Collections.Concurrent;
 
 namespace YTCons.MenuBlocks;
 
@@ -7,32 +8,48 @@ public class FeedChannelMenu : MenuBlock
 {
     public MenuOption? optionParent;
 
-    public static async Task<FeedChannelMenu> CreateAsync(string url)
+    public string title = "";
+
+    public string id = "";
+
+    public int maxAritcleAge;
+
+    public int maxArticleNumber;
+
+    public bool destroyTheElderly = false;
+
+    public bool notify = false;
+    public bool lowPriority = false;
+
+    public class PreMenuPacket
     {
-        var instance = new FeedChannelMenu();
-        using (var client = new HttpClient())
+        public required string url;
+        public required string title;
+        public int maxAritcleAge = 60;
+        public int maxArticleNumber = 1000;
+        public bool notify;
+    }
+
+    public static async Task<FeedChannelMenu> CreateAsync(PreMenuPacket packet)
+    {
+        var instance = new FeedChannelMenu()
         {
-            using var xmlStream = await client.GetStreamAsync(url);
-            int feedVideos = 0;
-            using (var xmlCheck = XmlReader.Create(xmlStream, new XmlReaderSettings { Async = true }))
-            {
-                while (await xmlCheck.ReadAsync())
-                {
-                    if (xmlCheck.NodeType == XmlNodeType.Element && xmlCheck.Name == "entry")
-                    {
-                        feedVideos++;
-                    }
-                }
-            }
-            for (int i = 0; i < feedVideos; i++)
-            {
-                using var xmlOtherStream = await client.GetStreamAsync(url);
-                instance.options.Add(await MenuBlocks.FeedVideoOption.CreateAsync(instance, xmlOtherStream, i));
-            }
+            title = packet.title,
+            maxAritcleAge = packet.maxAritcleAge,
+            maxArticleNumber = packet.maxArticleNumber,
+            notify = packet.notify
+        };
+        instance.id = packet.url.Replace("https://www.youtube.com/feeds/videos.xml?channel_id=", "");
+        if (instance.destroyTheElderly)
+        {
+            instance.CheckAnnihilation();
         }
-        instance.options[instance.cursor].selected = true;
-        var files = Directory.EnumerateFiles(Path.Combine(Dirs.feedsDir, url.Replace("https://www.youtube.com/feeds/videos.xml?channel_id=", "")));
-        //Pick up the stragglers that weren't included in the online feed.
+        List<FeedVideoOption> videos = await FeedVideoOption.CreateGroupAsync(instance, packet.url);
+        foreach (FeedVideoOption video in videos)
+        {
+            instance.options.Add(video);
+        }
+        var files = Directory.EnumerateFiles(Path.Combine(Dirs.feedsDir, instance.id));
         foreach (string filePath in files)
         {
             if (instance.options.Find(i => i is FeedVideoOption option && option.feedData.id == Path.GetFileNameWithoutExtension(filePath)) == null)
@@ -40,6 +57,14 @@ public class FeedChannelMenu : MenuBlock
                 instance.options.Add(new FeedVideoOption(instance, filePath));
             }
         }
+        instance.options.Sort((left, right) =>
+        {
+            var l = (FeedVideoOption)left;
+            var r = (FeedVideoOption)right;
+
+            return r.feedData.published.CompareTo(l.feedData.published);
+        });
+        instance.options[instance.cursor].selected = true;
         return instance;
     }
 
@@ -81,13 +106,69 @@ public class FeedChannelMenu : MenuBlock
         }
         Globals.activeScene.PopMenu();
     }
+
+    public void ChangePriority(MenuOption display)
+    {
+        lowPriority = !lowPriority;
+        if (optionParent != null) optionParent.useCounter = !lowPriority;
+        foreach (MenuOption option in options)
+        {
+            if (option is FeedVideoOption video)
+            {
+                video.UpdateReadStatus();
+            }
+        }
+        display.option = $"Switch Priority (current: {(lowPriority ? "Low" : "Normal")})";
+    }
+
+    private void CheckAnnihilation()
+    {
+        var files = Directory.EnumerateFiles(Path.Combine(Dirs.feedsDir, id)).ToList();
+        files.Sort((left, right) =>
+        {
+            var lTime = File.GetCreationTime(left);
+            var rTime = File.GetCreationTime(right);
+            return rTime.CompareTo(lTime);
+        });
+        int deleted = 0;
+        for (int i = 0; i < files.Count(); i++)
+        {
+            if (DateTime.Now - File.GetCreationTime(files[i]) > TimeSpan.FromDays(maxAritcleAge))
+            {
+                File.Delete(files[i]);
+                deleted++;
+            }
+            if (i - deleted >= maxArticleNumber)
+            {
+                File.Delete(files[i]);
+                deleted++;
+            }
+        }
+    }
 }
 
 public class FeedChannelMenuAlt : MenuBlock
 {
+    private bool queueReset = false;
+
     public FeedChannelMenuAlt(FeedChannelMenu original, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
     {
         options.Add(new MenuOption("Mark All as Read", this, () => Task.Run(() => original.MarkAllAsRead())));
+
+        var priorityOption = new MenuOption($"Switch Priority (current: {(original.lowPriority ? "Low" : "Normal")})", this, () => Task.Run(() => { }));
+        priorityOption.ChangeOnSelected(() => Task.Run(() => { queueReset = true; original.ChangePriority(priorityOption); }));
+        priorityOption.tip = "Normal priority displays which articles are unread, low priority doesn't. Meant to reduce clutter from feeds that post frequently.";
+        options.Add(priorityOption);
+
         options[cursor].selected = true;
+    }
+
+    protected override void OnUpdate()
+    {
+        if (queueReset)
+        {
+            queueReset = false;
+            Reset();
+        }
     }
 }
