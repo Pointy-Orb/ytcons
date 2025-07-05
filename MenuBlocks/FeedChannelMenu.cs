@@ -151,7 +151,8 @@ public class FeedChannelMenu : MenuBlock
             _maxArticleAge = packet.maxArticleAge,
             _maxArticleNumber = packet.maxArticleNumber,
             notify = packet.notify,
-            archiveMode = packet.archiveMode
+            archiveMode = packet.archiveMode,
+            lowPriority = packet.lowPriority
         };
         instance.id = packet.url.Replace("https://www.youtube.com/feeds/videos.xml?channel_id=", "");
         instance.CheckAnnihilation();
@@ -182,7 +183,7 @@ public class FeedChannelMenu : MenuBlock
 
             return r.feedData.published.CompareTo(l.feedData.published);
         });
-        instance.options[instance.cursor].selected = true;
+        instance.grayUnselected = true;
         return instance;
     }
 
@@ -234,7 +235,7 @@ public class FeedChannelMenu : MenuBlock
             while (num <= 0)
             {
                 var selDrawPos = inputPlacement.selectedDrawPos;
-                var isANumber = int.TryParse(Globals.ReadLine(selDrawPos.x, selDrawPos.y, $" > Enter the maximum article {(archiveMode == ArchiveMode.LimitAge ? "age in days" : "number")}"), out var test);
+                var isANumber = int.TryParse(Globals.ReadLine(selDrawPos.x, selDrawPos.y, $" > Enter the maximum article {(archiveMode == ArchiveMode.LimitAge ? "age in days" : "number")}: "), out var test);
                 if (isANumber)
                 {
                     num = test;
@@ -254,6 +255,7 @@ public class FeedChannelMenu : MenuBlock
         {
             feed.SaveAsXml();
         }
+        display.option = $"Switch Archive Mode (current: {PrettyArchiveMode})";
         Globals.activeScene.PopMenu();
     }
 
@@ -299,15 +301,88 @@ public class FeedChannelMenu : MenuBlock
             }
         }
     }
+
+    public void MoveToFolder(MenuOption parentOption, FolderMenu rootFolder)
+    {
+        var menu = RecursiveFolderChoiceMenu(rootFolder, parentOption);
+        Globals.activeScene.PushMenu(menu.menu);
+    }
+
+    private (MenuBlock menu, string title) RecursiveFolderChoiceMenu(FolderMenu folder, MenuOption parentOption, int depth = 1)
+    {
+        var menu = new MenuBlock(AnchorType.Cursor);
+        List<(MenuBlock menu, string title)> subMenus = new();
+        foreach (FolderMenu subFolder in folder.subFolders)
+        {
+            var subMenu = RecursiveFolderChoiceMenu(subFolder, parentOption, depth + 1);
+            subMenus.Add(subMenu);
+        }
+
+        var clariflyRoot = folder.Equals(folder.root) ? " (no folder)" : "";
+        menu.options.Add(new MenuOption("Place Here" + clariflyRoot, menu, () => Task.Run(() => ActuallyMoveToFolder(folder, parentOption, depth))));
+        menu.options.Add(new MenuOption("Make Folder Here", menu, () => Task.Run(() => MakeNewFolder(folder, parentOption, depth))));
+        foreach ((MenuBlock menu, string title) subMenu in subMenus)
+        {
+            menu.options.Add(new MenuOption(subMenu.title, menu, () => Task.Run(() => Globals.activeScene.PushMenu(subMenu.menu))));
+        }
+        return (menu, folder.title);
+    }
+
+    private void MakeNewFolder(FolderMenu parentFolder, MenuOption parentOption, int depth)
+    {
+        var selDrawPos = Globals.activeScene.PeekMenu().selectedDrawPos;
+        string? folderName = Globals.ReadLineNull(selDrawPos.x, selDrawPos.y, " >  Enter the name of the new folder: ");
+        if (folderName == null || folderName == "")
+        {
+            Globals.activeScene.PeekMenu().resetNextTick = true;
+            return;
+        }
+        var newFolder = new FolderMenu(folderName, parentFolder);
+        parentFolder.subFolders.Add(newFolder);
+        var option = new FolderMenu.FolderOption("[folder]/" + newFolder.title, parentFolder, newFolder, () => Task.Run(() => Globals.activeScene.PushMenu(newFolder)), () => Task.Run(() => Globals.activeScene.PushMenu(new FolderMenuAlt(newFolder))));
+        option.useCounter = true;
+        parentFolder.options.Add(option);
+        ActuallyMoveToFolder(newFolder, parentOption, depth);
+    }
+
+    private void ActuallyMoveToFolder(FolderMenu folder, MenuOption parentOption, int depth)
+    {
+        parentOption.parent.options.Remove(parentOption);
+        if (parentOption.parent is FolderMenu parentFolder)
+        {
+            parentFolder.menus.Remove(this);
+            if (parentFolder.options.Count() <= 1)
+            {
+                parentFolder.Remove(false);
+            }
+        }
+        parentOption.parent = folder;
+        folder.menus.Add(this);
+        folder.options.Add(parentOption);
+        for (int i = 0; i <= depth; i++)
+        {
+            Globals.activeScene.PopMenu();
+        }
+        var newCurMenu = Globals.activeScene.PeekMenu();
+        if (newCurMenu.cursor >= newCurMenu.options.Count())
+        {
+            newCurMenu.cursor = 0;
+        }
+        if (Globals.activeScene is FeedScene feed)
+        {
+            feed.SaveAsXml();
+        }
+        newCurMenu.options[newCurMenu.cursor].selected = true;
+        parentOption.selected = false;
+    }
 }
 
 public class FeedChannelMenuAlt : MenuBlock
 {
     private bool queueReset = false;
 
-    public FeedChannelMenuAlt(FeedChannelMenu original, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
+    public FeedChannelMenuAlt(FeedChannelMenu original, MenuOption parentOption, FolderMenu rootFolder, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
     {
-
         options.Add(new MenuOption("Mark All as Read", this, () => Task.Run(() => original.MarkAllAsRead())));
 
         var priorityOption = new MenuOption($"Switch Priority (current: {(original.lowPriority ? "Low" : "Normal")})", this, () => Task.Run(() => { }));
@@ -315,21 +390,41 @@ public class FeedChannelMenuAlt : MenuBlock
         priorityOption.tip = "Normal priority displays which articles are unread, low priority doesn't. Meant to reduce clutter from feeds that post frequently.";
         options.Add(priorityOption);
 
-        var setArchiveOption = new MenuOption($"Switch Archive Mode (current: {original.PrettyArchiveMode}):", this, () => Task.Run(() => { }));
+        var setArchiveOption = new MenuOption($"Switch Archive Mode (current: {original.PrettyArchiveMode})", this, () => Task.Run(() => { }));
         var archiveModeMenu = SetArchiveModeMenu(original, setArchiveOption);
         setArchiveOption.ChangeOnSelected(() => Task.Run(() => Globals.activeScene.PushMenu(archiveModeMenu)));
         options.Add(setArchiveOption);
+
+        options.Add(new MenuOption("Move to Folder", this, () => Task.Run(() => original.MoveToFolder(parentOption, rootFolder))));
 
         options[cursor].selected = true;
     }
 
     private MenuBlock SetArchiveModeMenu(FeedChannelMenu original, MenuOption parentOption)
     {
-        var menu = new MenuBlock();
+        var menu = new MenuBlock(AnchorType.Cursor);
         parentOption.childMenu = menu;
         foreach (ArchiveMode mode in Enum.GetValues(typeof(ArchiveMode)))
         {
             var option = new MenuOption(original.PrettifyArchiveMode(mode, false), menu, () => Task.Run(() => original.SetArchiveMode(mode, menu, parentOption)));
+            switch (mode)
+            {
+                case ArchiveMode.Default:
+                    option.tip = "Uses the archive default defined in global feed settings";
+                    break;
+                case ArchiveMode.ArchiveAll:
+                    option.tip = "Preserves all feed entries indefinently";
+                    break;
+                case ArchiveMode.DontArchive:
+                    option.tip = "No entries that aren't included in the feed URL are preserved";
+                    break;
+                case ArchiveMode.LimitAge:
+                    option.tip = "Removes entries that are older than a set amount of days";
+                    break;
+                case ArchiveMode.LimitNumber:
+                    option.tip = "Removes the oldest entries after the number of entries exceeds a predefined capacity";
+                    break;
+            }
             menu.options.Add(option);
         }
         menu.options[menu.cursor].selected = true;

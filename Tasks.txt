@@ -1,14 +1,16 @@
 TODO:
 Iron out kinks with paged description
-Allow viewing of channel pages
+Allow viewing of channel pages (and the ability to add channels to feeds)
 Allow viewing of comments section
 Add settings
-Make RSS feed able to actually save a feed
+Add feed settings
+Add "Move Contents" option for FolderMenuAlt
+Add the ability to remove feeds (kinda already exists, just repurpose the folder code)
 Find a way to get drawing support for Japanese characters to work
-Add the ability to make and destroy folders
 
 DOING:
 Integrate RSS feed
 
-
 DONE:
+Add the ability to make and destroy folders
+Make RSS feed able to actually save a feed

@@ -9,6 +9,7 @@ public class MenuBlock
     public bool active { get; protected set; }
     private bool draw = false;
     public bool grayUnselected { get; set; }
+    public bool resetNextTick = false;
 
     private int prevWindowHeight = 0;
 
@@ -79,6 +80,11 @@ public class MenuBlock
 
     public async Task Update()
     {
+        if (resetNextTick)
+        {
+            resetNextTick = false;
+            Reset();
+        }
         OnUpdate();
         if (!active)
         {
@@ -172,7 +178,7 @@ public class MenuBlock
             Array.Clear(Globals.activeScene.protectedTile, 0, Globals.activeScene.protectedTile.Length);
         }
         PostDraw();
-        foreach(MenuOption option in options)
+        foreach (MenuOption option in options)
         {
             option.PostDrawEverything();
         }
@@ -212,7 +218,10 @@ public class MenuBlock
             }
             if (oldCursor != cursor)
             {
-                options[oldCursor].selected = false;
+                if (options.Count > oldCursor)
+                {
+                    options[oldCursor].selected = false;
+                }
                 options[cursor].selected = true;
             }
             if ((key == ConsoleKey.H || key == ConsoleKey.LeftArrow || key == ConsoleKey.A))
@@ -233,5 +242,17 @@ public class MenuBlock
 
     protected virtual async Task OnCheckKeys(ConsoleKey key)
     {
+    }
+
+    public static Func<Task> ConfirmAction(Func<Task> action)
+    {
+        return () => Task.Run(() =>
+        {
+            var newAction = action + (() => Task.Run(() => Globals.activeScene.PopMenu()));
+            var block = new MenuBlock(AnchorType.Cursor);
+            block.options.Add(new MenuOption("Abort", block, () => Task.Run(() => Globals.activeScene.PopMenu())));
+            block.options.Add(new MenuOption("Confirm", block, action));
+            Globals.activeScene.PushMenu(block);
+        });
     }
 }

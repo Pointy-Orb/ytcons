@@ -31,6 +31,10 @@ public class ExtractedVideoInfo
     {
         var instance = new ExtractedVideoInfo(id);
         await instance.Init();
+        if (!instance.success)
+        {
+            return instance;
+        }
         instance.gotVideo = true;
         await instance.GetSubtitles();
         return instance;
@@ -46,6 +50,8 @@ public class ExtractedVideoInfo
         this.id = id;
     }
 
+    public bool success = true;
+
     async Task Init()
     {
         if (!File.Exists(Dirs.VideoInfoJson(id)) || DateTime.Now - File.GetCreationTime(Dirs.VideoInfoJson(id)) > TimeSpan.FromHours(2))
@@ -57,7 +63,9 @@ public class ExtractedVideoInfo
             await ytdlp.WaitForExitAsync();
             if (ytdlp.ExitCode > 1)
             {
-                throw new Exception("yt-dlp failed to grab the file");
+                LoadBar.WriteLog("yt-dlp failed to grab metadata");
+                success = false;
+                return;
             }
         }
         try
@@ -145,7 +153,7 @@ public class ExtractedVideoInfo
     {
         var process = new Process();
         process.StartInfo.FileName = Dirs.GetPathApp("yt-dlp");
-        process.StartInfo.Arguments = $"{id} -o {Path.Combine(Dirs.VideoIdFolder(id), id + ".webm")}";
+        process.StartInfo.Arguments = $"https://youtu.be/{id} -o {Path.Combine(Dirs.VideoIdFolder(id), id + ".webm")}";
         if (!Globals.debug)
         {
             process.StartInfo.RedirectStandardError = true;

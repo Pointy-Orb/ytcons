@@ -63,6 +63,7 @@ public class Scene
     public void PushMenu(MenuBlock menu)
     {
         menus.Push(menu);
+        menu.options[menu.cursor].selected = true;
         menus.Peek().Reset();
     }
 
@@ -101,9 +102,17 @@ public class Scene
 
     public void PopMenu(bool forced = false)
     {
-        if (!forced && menus.Count <= 1)
+        if (!forced && menus.Count() <= 1)
         {
             return;
+        }
+        if (PeekMenu().cursor >= PeekMenu().options.Count())
+        {
+            PeekMenu().cursor = 0;
+        }
+        if (PeekMenu().options.Count() > 0)
+        {
+            PeekMenu().options[PeekMenu().cursor].selected = false;
         }
         menus.Pop();
         if (menus.TryPeek(out var menu))

@@ -24,11 +24,17 @@ public class VideoBlock : MenuBlock
     string thumbnailPath = "";
     char[] sourceDesc = new char[0];
     bool paged = false;
+    public bool selfDestruct = false;
 
     public static async Task<VideoBlock> CreateAsync(string id)
     {
         var instance = new VideoBlock(id);
         instance.videoInfo = await ExtractedVideoInfo.CreateAsync(id);
+        if (!instance.videoInfo.success)
+        {
+            instance.selfDestruct = true;
+            return instance;
+        }
         instance.thumbnailPath = Path.GetTempPath() + instance.videoID + ".webp";
         instance.extraData = instance.MakeExtraData();
         instance.sourceDesc = instance.FinishConstructor();
@@ -191,6 +197,11 @@ public class VideoBlock : MenuBlock
 
     protected override void OnUpdate()
     {
+        if (selfDestruct)
+        {
+            Globals.activeScene.PopMenu();
+            selfDestruct = false;
+        }
         if (activeBecause == InactiveReason.ShowingDeets && !videoInfo.windowOpen)
         {
             activeBecause = InactiveReason.Active;

@@ -245,6 +245,12 @@ public class FeedVideoOption : MenuOption
     private async Task OpenVideo()
     {
         var videoBlock = await VideoBlock.CreateAsync(feedData.id);
+        if (videoBlock.selfDestruct)
+        {
+            videoBlock.selfDestruct = false;
+            Globals.activeScene.PeekMenu().resetNextTick = true;
+            return;
+        }
         Globals.activeScene.PushMenu(videoBlock);
         if (!feedData.read)
         {

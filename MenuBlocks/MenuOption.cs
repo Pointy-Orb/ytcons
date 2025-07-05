@@ -51,6 +51,11 @@ public class MenuOption
         _onSelected = newAction;
     }
 
+    public void ChangeAltOnSelected(Func<Task> newAction)
+    {
+        _altOnSelected = newAction;
+    }
+
     public async Task OnSelected()
     {
         Task task = _onSelected();
