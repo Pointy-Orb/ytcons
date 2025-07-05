@@ -9,7 +9,7 @@ public class SearchScene : Scene
     public static async Task<SearchScene> CreateAsync(string query)
     {
         var instance = new SearchScene();
-        await instance.PushMenuAsync(new MenuBlock(AnchorType.Top));
+        instance.PushMenu(new MenuBlock(AnchorType.Top));
         instance.PeekMenu().drawOffset = 5;
         instance.PeekMenu().grayUnselected = true;
         instance.PeekMenu().options.Add(new MenuOption("Back", instance.PeekMenu(), () => Task.Run(() => { LoadBar.visible = false; Globals.scenes.Pop(); })));
@@ -47,7 +47,7 @@ public class SearchScene : Scene
         try
         {
             var menu = await VideoBlock.CreateAsync(result.VideoId);
-            menus.Reverse().First().options.Add(new MenuOption($"{result.Author} | {result.Title} | {result.Length}", menus.Reverse().First(), () => PushMenuAsync(menu)));
+            menus.Reverse().First().options.Add(new MenuOption($"{result.Author} | {result.Title} | {result.Length}", menus.Reverse().First(), () => Task.Run(() => PushMenu(menu))));
         }
         catch { }
     }

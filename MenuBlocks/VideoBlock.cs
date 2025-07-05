@@ -75,7 +75,7 @@ public class VideoBlock : MenuBlock
 
     private char[] FinishConstructor()
     {
-        options.Add(new MenuOption("Play", this, () => PlayAsync(), () => Globals.activeScene.PushMenuAsync(new ChooseFormat(videoInfo))));
+        options.Add(new MenuOption("Play", this, () => PlayAsync(), () => Task.Run(() => Globals.activeScene.PushMenu(new ChooseFormat(videoInfo)))));
         if (Dirs.TryGetPathApp("yt-dlp") != null)
         {
             options.Add(new MenuOption("Download", this, () => Task.Run(() => Globals.activeScene.PushMenu(new ChooseFormat(videoInfo, true)))));

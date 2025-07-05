@@ -67,12 +67,6 @@ public class Scene
         menus.Peek().Reset();
     }
 
-    public async Task PushMenuAsync(MenuBlock menu)
-    {
-        menus.Push(menu);
-        menus.Peek().Reset();
-    }
-
     public MenuBlock PeekMenu()
     {
         return menus.Peek();

@@ -37,7 +37,7 @@ public class PlaylistScene : Scene
             totalVideos++;
         }
         await Task.WhenAll(videoTasks);
-        rootMenu.options.Add(new MenuOption(Path.GetFileNameWithoutExtension(path).Replace("_", " "), rootMenu, () => PushMenuAsync(menu), menu, () => Task.Run(() => PushMenu(new PlaylistOptions(path, rootMenu)))));
+        rootMenu.options.Add(new MenuOption(Path.GetFileNameWithoutExtension(path).Replace("_", " "), rootMenu, () => Task.Run(() => PushMenu(menu)), menu, () => Task.Run(() => PushMenu(new PlaylistOptions(path, rootMenu)))));
         menu.options[menu.cursor].selected = true;
         if (rootMenu.options.Count() >= 10)
         {
@@ -53,7 +53,7 @@ public class PlaylistScene : Scene
         removeOption.ChangeOnSelected(() => PlaylistOptions.RemoveVideo(removeOption, menu, video.videoInfo));
         removeOption.extraData = path;
         video.options.Insert(3, removeOption);
-        menu.options.Add(new MenuOption(video.videoInfo.video.Title, menu, () => PushMenuAsync(video), video));
+        menu.options.Add(new MenuOption(video.videoInfo.video.Title, menu, () => Task.Run(() => PushMenu(video)), video));
         if (menu.options.Count() >= 10) menu.grayUnselected = true;
         finishedVideos++;
     }

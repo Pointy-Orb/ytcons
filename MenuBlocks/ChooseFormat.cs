@@ -16,18 +16,18 @@ public class ChooseFormat : MenuBlock
         }
         foreach (string format in formats)
         {
-            options.Add(new MenuOption(format.ToString(), this, () => Globals.activeScene.PushMenuAsync(new ChooseResolution(videoInfo, format, dowloading))));
+            options.Add(new MenuOption(format.ToString(), this, () => Task.Run(() => Globals.activeScene.PushMenu(new ChooseResolution(videoInfo, format, dowloading)))));
         }
-        if(dowloading)
+        if (dowloading)
         {
-            options.Add(new MenuOption("Audio Only",this, () => DownloadAudio(videoInfo)));
+            options.Add(new MenuOption("Audio Only", this, () => DownloadAudio(videoInfo)));
         }
         options[cursor].selected = true;
     }
 
     private async Task DownloadAudio(ExtractedVideoInfo videoInfo)
     {
-        await videoInfo.Download("mp3","144p");
+        await videoInfo.Download("mp3", "144p");
         Globals.activeScene.PopMenu();
         Globals.activeScene.PopMenu();
     }
