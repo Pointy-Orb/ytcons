@@ -66,7 +66,7 @@ public class RootScene : Scene
         string logoPiece = "";
         for (int i = 0; i < rawLogo.Length; i++)
         {
-            if (rawLogo[i] == Convert.ToChar(Environment.NewLine))
+            if (rawLogo[i] == Convert.ToChar(Environment.NewLine.First()))
             {
                 logoPieces.Add(logoPiece);
                 logoPiece = "";

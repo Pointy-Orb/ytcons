@@ -63,7 +63,10 @@ public class Scene
     public void PushMenu(MenuBlock menu)
     {
         menus.Push(menu);
-        menu.options[menu.cursor].selected = true;
+        if(menu.options.Count > 0)
+        {
+            menu.options[menu.cursor].selected = true;
+        }
         menus.Peek().Reset();
     }
 

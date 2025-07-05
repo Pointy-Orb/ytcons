@@ -10,9 +10,13 @@ public static class Dirs
     {
         //Windows just had to be different
         var rawPath = System.Environment.GetEnvironmentVariable(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Path" : "PATH");
-        string[] paths = rawPath.Split(':');
+        string[] paths = rawPath.Split(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ';' : ':');
         foreach (string path in paths)
         {
+            if(!Directory.Exists(path))
+            {
+                continue;
+            }
             var files = Directory.EnumerateFiles(path).ToList();
             string? ffmpegPath = files.Find(i => i.Contains(appname));
             if (ffmpegPath != null)

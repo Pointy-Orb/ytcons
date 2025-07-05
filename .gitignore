@@ -1,4 +1,5 @@
 .globalseddirs
 bin/
 obj/
+.vs/
 a.out
