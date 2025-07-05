@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Text;
 using System.Collections.Concurrent;
 using System.Collections;
 using System.Runtime.InteropServices;
@@ -117,8 +118,16 @@ public class ExtractedVideoInfo
         var language = video.Language;
         if (language == null)
         {
-            //TODO: Dynamically get language if null depending on system langauge
-            language = "en";
+            language = video.AutomaticCaptions.Keys.ToList().Find(i => i.Contains("orig"));
+            if (language != null)
+            {
+                language = Regex.Replace(language, "(.*)-.*", "$1");
+            }
+            else
+            {
+                //TODO: Dynamically get failsafe language from system config
+                language = "en";
+            }
         }
         var subPath = Path.Combine(Dirs.VideoIdFolder(id), language + $"-auto.{language}.srt");
         if (File.Exists(subPath))
@@ -127,7 +136,15 @@ public class ExtractedVideoInfo
             return;
         }
         string? autoSub = video.AutomaticCaptions.Keys.ToList().Find(i => i.Contains(language));
-        if (autoSub == null) return;
+        if (autoSub == null)
+        {
+            var deHyphenLanguage = Regex.Replace(language, "(.*)-.*", "$1");
+            autoSub = video.AutomaticCaptions.Keys.ToList().Find(i => i.Contains(deHyphenLanguage));
+        }
+        if (autoSub == null)
+        {
+            return;
+        }
         await GetSubsInner(video.AutomaticCaptions[autoSub], subtitles, subPath);
     }
 
@@ -142,6 +159,10 @@ public class ExtractedVideoInfo
         if (collection is ConcurrentBag<string> bag)
         {
             bag.Add(path);
+        }
+        else if (collection is List<string> list)
+        {
+            list.Add(path);
         }
         else
         {
@@ -168,7 +189,6 @@ public class ExtractedVideoInfo
         mediaPlayer = new();
         mediaPlayer.StartInfo.FileName = Dirs.GetPathApp("mpv");
         FormatData? videoStream = video.Formats.Where(i => i.FormatNote == resolution).Where(i => i.Acodec == "none").ToList().Find(i => i.Ext == format);
-        FormatData? audioStream = video.Formats.Where(i => i.AudioChannels != null).ToList().Find(i => i.Vcodec == "none");
         if (videoStream == null)
         {
             videoStream = video.Formats.Where(i => i.Protocol == "https").Where(i => i.AudioChannels == null).ToList().Find(i => i.Vcodec != "none");
@@ -183,7 +203,37 @@ public class ExtractedVideoInfo
                 subsAsArg += delimiter;
             }
         }
-        mediaPlayer.StartInfo.Arguments = $"{(subsAsArg == "" ? "" : "--sub-files=")}\"{subsAsArg}\" \"{videoStream.Url}\" --audio-file=\"{audioStream.Url}\" --title=\"{video.Title} | {video.Channel}\"";
+        List<FormatData>? audioStreams = video.Formats.Where(i => i.AudioChannels != null).Where(i => i.Vcodec == "none").ToList();
+        List<string> langs = new();
+        foreach (FormatData audioStream in audioStreams)
+        {
+            if (audioStream.Language != null && !langs.Contains(audioStream.Language))
+            {
+                langs.Add(audioStream.Language);
+            }
+        }
+        var audioPath = "";
+        if (audioStreams != null)
+        {
+            if (langs.Count > 1)
+            {
+                await MakeAudioScript(audioStreams, langs);
+                audioPath = $"--script=\"{Path.Combine(Dirs.VideoIdFolder(id), "audio.lua")}\"";
+            }
+            else
+            {
+                var mediumStreams = audioStreams.Where(i => i.FormatNote.Contains("medium")).ToArray();
+                if (mediumStreams != null && mediumStreams.Length > 0)
+                {
+                    audioPath = $"--audio-file=\"{mediumStreams[0].Url}\"";
+                }
+                else
+                {
+                    audioPath = $"--audio-file=\"{audioStreams[0].Url}\"";
+                }
+            }
+        }
+        mediaPlayer.StartInfo.Arguments = $"{(subsAsArg == "" ? "" : "--sub-files=")}\"{subsAsArg}\" \"{videoStream.Url}\" --title=\"{video.Title} | {video.Channel}\" {audioPath}";
         playing = true;
         try
         {
@@ -194,6 +244,71 @@ public class ExtractedVideoInfo
         catch (Exception ex)
         {
             Console.WriteLine("Failed to start media player: " + ex.Message);
+        }
+    }
+
+    //The audio is loaded with a special script in case of videos with mulitple audio tracks.
+    //This ensures that all of the tracks load with the right language tag, and in a good order.
+    private async Task MakeAudioScript(List<FormatData> audioStreams, List<string> langs)
+    {
+        if (!File.Exists(Path.Combine(Dirs.VideoIdFolder(id), "audio.lua")))
+        {
+            List<string> audioTracks = new();
+            List<string> usedLangs = new();
+            bool selected = false;
+            for (int i = 0; i < audioStreams.Count; i++)
+            {
+                if (usedLangs.Contains(audioStreams[i].Language)) continue;
+
+                //Only one audio file can be selected by default
+                bool justSelected = audioStreams[i].FormatNote.Contains("default");
+                justSelected = selected ? false : justSelected;
+                selected = justSelected ? true : selected;
+
+                var langDiff = new List<string>();
+                foreach (string lang in langs)
+                {
+                    if (!usedLangs.Contains(lang))
+                    {
+                        langDiff.Add(lang);
+                    }
+                }
+                if (langDiff.Count <= 1 && !selected)
+                {
+                    justSelected = true;
+                }
+                //Select vs auto flags ensure that the video's native language is prioritized over any auto-generated dubs
+                var track = $"audio-add {audioStreams[i].Url} {(justSelected ? "select" : "auto")} \\\"{audioStreams[i].FormatNote}\\\"";
+                if (audioStreams[i].Language != null)
+                {
+                    var twoLetterCode = Regex.Replace(audioStreams[i].Language, "(.*)-.*", "$1");
+                    var lang = Language.FromPart1(twoLetterCode);
+                    if (lang != null)
+                    {
+                        track += $" {lang.Part2}";
+                    }
+                    usedLangs.Add(audioStreams[i].Language);
+                }
+                audioTracks.Add($"mp.command(\"{track}\")");
+            }
+            audioTracks.Sort((left, right) =>
+            {
+                bool leftOrig = left.Contains("default");
+                bool rightOrig = right.Contains("default");
+
+                if (leftOrig && !rightOrig) return -1;
+                if (!leftOrig && rightOrig) return 1;
+
+                return string.Compare(left, right);
+            });
+            StringBuilder audioFile = new("mp.register_event(\"file-loaded\", function()");
+            audioFile.AppendLine();
+            foreach (string track in audioTracks)
+            {
+                audioFile.AppendLine($"	{track}");
+            }
+            audioFile.AppendLine("end)");
+            await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "audio.lua"), audioFile.ToString());
         }
     }
 

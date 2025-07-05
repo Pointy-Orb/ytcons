@@ -131,6 +131,7 @@ public class FolderMenu : MenuBlock
     public void RecursiveFolderAdding(List<MenuBlock>? parentAllFeeds = null)
     {
         BagToList();
+        //TODO: Have this update dynamically as folders are moved around
         MenuBlock allFeeds = new(AnchorType.Cursor);
         foreach (FeedChannelMenu menu in menus)
         {
@@ -324,6 +325,124 @@ public class FolderMenu : MenuBlock
             root.SaveAsXml();
         }
     }
+
+    public void MoveFolder()
+    {
+        var menu = root.RecursiveFolderChoiceMenu(this, parent.options.Find(i => i is FolderOption folder && folder.selected));
+        Globals.activeScene.PushMenu(menu);
+    }
+
+    private enum FolderChoiceMenuPurpose
+    {
+        MoveFeedChannel,
+        MoveFolder,
+        MoveFolderContents
+    }
+
+    public MenuBlock RecursiveFolderChoiceMenu(FolderMenu folderToMove, MenuOption parentOption)
+    {
+        return _RecursiveFolderChoiceMenu(parentOption, FolderChoiceMenuPurpose.MoveFolder, folderToMove: folderToMove).menu;
+    }
+
+    public MenuBlock RecursiveFolderChoiceMenu(FeedChannelMenu feedMenu, MenuOption parentOption)
+    {
+        return _RecursiveFolderChoiceMenu(parentOption, FolderChoiceMenuPurpose.MoveFeedChannel, feedMenu: feedMenu).menu;
+    }
+
+    private (MenuBlock menu, string title) _RecursiveFolderChoiceMenu(MenuOption parentOption, FolderChoiceMenuPurpose purpose, int depth = 1, FolderMenu? folderToMove = null, FeedChannelMenu? feedMenu = null)
+    {
+        var menu = new MenuBlock(AnchorType.Cursor);
+        List<(MenuBlock menu, string title)> subMenus = new();
+        foreach (FolderMenu subFolder in subFolders)
+        {
+            var subMenu = subFolder._RecursiveFolderChoiceMenu(parentOption, purpose, depth + 1, folderToMove, feedMenu);
+            subMenus.Add(subMenu);
+        }
+
+        var clariflyRoot = this.Equals(root) ? " (no folder)" : "";
+        Func<Task> move = () => Task.Run(() => { });
+        Func<Task> newFolder = () => Task.Run(() => { });
+        switch (purpose)
+        {
+            case FolderChoiceMenuPurpose.MoveFeedChannel:
+                move = () => Task.Run(() => feedMenu.MoveToFolderDirect(this, parentOption, depth));
+                newFolder = () => Task.Run(() => feedMenu.MakeNewFolder(this, parentOption, depth));
+                break;
+            case FolderChoiceMenuPurpose.MoveFolder:
+                move = () => Task.Run(() => folderToMove.MoveToOtherFolder(this, parentOption, depth));
+                newFolder = () => Task.Run(() => folderToMove.NewFolderThenMoveToIt(this, parentOption, depth));
+                break;
+            case FolderChoiceMenuPurpose.MoveFolderContents:
+                //TODO: Make this method
+                break;
+        }
+        menu.options.Add(new MenuOption("Place Here" + clariflyRoot, menu, move));
+        menu.options.Add(new MenuOption("Make Folder Here", menu, newFolder));
+        foreach ((MenuBlock menu, string title) subMenu in subMenus)
+        {
+            menu.options.Add(new MenuOption(subMenu.title, menu, () => Task.Run(() => Globals.activeScene.PushMenu(subMenu.menu))));
+        }
+        return (menu, title);
+    }
+
+    private void NewFolderThenMoveToIt(FolderMenu parentFolder, MenuOption parentOption, int depth)
+    {
+        var newFolder = NewFolder(parentFolder);
+        if (newFolder.aborted)
+        {
+            return;
+        }
+        MoveToOtherFolder(newFolder.newFolder, parentOption, depth);
+    }
+
+    public static (FolderMenu newFolder, bool aborted) NewFolder(FolderMenu parentFolder)
+    {
+        var selDrawPos = Globals.activeScene.PeekMenu().selectedDrawPos;
+        string? folderName = Globals.ReadLineNull(selDrawPos.x, selDrawPos.y, " >  Enter the name of the new folder: ");
+        if (folderName == null || folderName == "")
+        {
+            Globals.activeScene.PeekMenu().resetNextTick = true;
+            return (new FolderMenu("", parentFolder), true);
+        }
+        var newFolder = new FolderMenu(folderName, parentFolder);
+        parentFolder.subFolders.Add(newFolder);
+        var option = new FolderMenu.FolderOption("[folder]/" + newFolder.title, parentFolder, newFolder, () => Task.Run(() => Globals.activeScene.PushMenu(newFolder)), () => Task.Run(() => Globals.activeScene.PushMenu(new FolderMenuAlt(newFolder))));
+        option.useCounter = true;
+        parentFolder.options.Add(option);
+        return (newFolder, false);
+    }
+
+    private void MoveToOtherFolder(FolderMenu target, MenuOption parentOption, int depth)
+    {
+        if (parentOption.parent is FolderMenu parentFolder)
+        {
+            parentFolder.subFolders.Remove(this);
+            target.subFolders.Add(this);
+            if (parentFolder.options.Count < 1)
+            {
+                parentFolder.Remove(false);
+            }
+        }
+        this.parent = target;
+        parentOption.selected = false;
+        parentOption.parent.options.Remove(parentOption);
+        if (parentOption.parent.cursor >= parentOption.parent.options.Count)
+        {
+            parentOption.parent.cursor = 0;
+        }
+        if (parentOption.parent.options.Count > 1)
+        {
+            parentOption.parent.options[parentOption.parent.cursor].selected = true;
+        }
+
+        target.options.Add(parentOption);
+        parentOption.parent = target;
+        for (int i = 0; i <= depth; i++)
+        {
+            Globals.activeScene.PopMenu();
+        }
+        root.SaveAsXml();
+    }
 }
 
 public class FolderMenuAlt : MenuBlock
@@ -333,6 +452,7 @@ public class FolderMenuAlt : MenuBlock
         options.Add(new MenuOption("Rename", this, () => Task.Run(() => original.Rename(this))));
         options.Add(new MenuOption("Mark All as Read", this, () => Task.Run(() => original.MarkAllAsRead())));
         options.Add(new MenuOption("Remove Folder", this, ConfirmAction(() => Task.Run(() => original.Remove()))));
+        options.Add(new MenuOption("Move Folder", this, () => Task.Run(() => original.MoveFolder())));
         //TODO: Add "Move Contents" option that works like Move To Folder but does it to all the contents 
     }
 }

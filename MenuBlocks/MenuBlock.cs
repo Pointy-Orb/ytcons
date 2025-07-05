@@ -218,11 +218,18 @@ public class MenuBlock
             }
             if (oldCursor != cursor)
             {
-                if (options.Count > oldCursor)
+                if (options.Count > oldCursor && options.Count > 0)
                 {
                     options[oldCursor].selected = false;
                 }
-                options[cursor].selected = true;
+                if (options.Count <= cursor)
+                {
+                    cursor = 0;
+                }
+                if (options.Count > 0)
+                {
+                    options[cursor].selected = true;
+                }
             }
             if ((key == ConsoleKey.H || key == ConsoleKey.LeftArrow || key == ConsoleKey.A))
             {

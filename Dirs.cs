@@ -13,7 +13,7 @@ public static class Dirs
         string[] paths = rawPath.Split(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ';' : ':');
         foreach (string path in paths)
         {
-            if(!Directory.Exists(path))
+            if (!Directory.Exists(path))
             {
                 continue;
             }
@@ -44,6 +44,16 @@ public static class Dirs
             var downloads = Path.Combine(GetFolderPath(SpecialFolder.UserProfile), "Downloads", "ytcons");
             Directory.CreateDirectory(downloads);
             return downloads;
+        }
+    }
+
+    internal static string mpvConfigDir
+    {
+        get
+        {
+            var config = Path.Combine(GetFolderPath(SpecialFolder.ApplicationData, SpecialFolderOption.DoNotVerify), "mpv");
+            Directory.CreateDirectory(config);
+            return config;
         }
     }
 
@@ -88,7 +98,7 @@ public static class Dirs
         get
         {
             var feeds = Path.Combine(localDir, "feeds");
-			Directory.CreateDirectory(feeds);
+            Directory.CreateDirectory(feeds);
             return feeds;
         }
     }

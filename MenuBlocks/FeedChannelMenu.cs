@@ -304,48 +304,22 @@ public class FeedChannelMenu : MenuBlock
 
     public void MoveToFolder(MenuOption parentOption, FolderMenu rootFolder)
     {
-        var menu = RecursiveFolderChoiceMenu(rootFolder, parentOption);
-        Globals.activeScene.PushMenu(menu.menu);
+        var menu = rootFolder.RecursiveFolderChoiceMenu(this, parentOption);
+        Globals.activeScene.PushMenu(menu);
     }
 
-    private (MenuBlock menu, string title) RecursiveFolderChoiceMenu(FolderMenu folder, MenuOption parentOption, int depth = 1)
-    {
-        var menu = new MenuBlock(AnchorType.Cursor);
-        List<(MenuBlock menu, string title)> subMenus = new();
-        foreach (FolderMenu subFolder in folder.subFolders)
-        {
-            var subMenu = RecursiveFolderChoiceMenu(subFolder, parentOption, depth + 1);
-            subMenus.Add(subMenu);
-        }
 
-        var clariflyRoot = folder.Equals(folder.root) ? " (no folder)" : "";
-        menu.options.Add(new MenuOption("Place Here" + clariflyRoot, menu, () => Task.Run(() => ActuallyMoveToFolder(folder, parentOption, depth))));
-        menu.options.Add(new MenuOption("Make Folder Here", menu, () => Task.Run(() => MakeNewFolder(folder, parentOption, depth))));
-        foreach ((MenuBlock menu, string title) subMenu in subMenus)
-        {
-            menu.options.Add(new MenuOption(subMenu.title, menu, () => Task.Run(() => Globals.activeScene.PushMenu(subMenu.menu))));
-        }
-        return (menu, folder.title);
-    }
-
-    private void MakeNewFolder(FolderMenu parentFolder, MenuOption parentOption, int depth)
+    public void MakeNewFolder(FolderMenu parentFolder, MenuOption parentOption, int depth)
     {
-        var selDrawPos = Globals.activeScene.PeekMenu().selectedDrawPos;
-        string? folderName = Globals.ReadLineNull(selDrawPos.x, selDrawPos.y, " >  Enter the name of the new folder: ");
-        if (folderName == null || folderName == "")
+        var newFolder = FolderMenu.NewFolder(parentFolder);
+        if (newFolder.aborted)
         {
-            Globals.activeScene.PeekMenu().resetNextTick = true;
             return;
         }
-        var newFolder = new FolderMenu(folderName, parentFolder);
-        parentFolder.subFolders.Add(newFolder);
-        var option = new FolderMenu.FolderOption("[folder]/" + newFolder.title, parentFolder, newFolder, () => Task.Run(() => Globals.activeScene.PushMenu(newFolder)), () => Task.Run(() => Globals.activeScene.PushMenu(new FolderMenuAlt(newFolder))));
-        option.useCounter = true;
-        parentFolder.options.Add(option);
-        ActuallyMoveToFolder(newFolder, parentOption, depth);
+        MoveToFolderDirect(newFolder.newFolder, parentOption, depth);
     }
 
-    private void ActuallyMoveToFolder(FolderMenu folder, MenuOption parentOption, int depth)
+    public void MoveToFolderDirect(FolderMenu folder, MenuOption parentOption, int depth)
     {
         parentOption.parent.options.Remove(parentOption);
         if (parentOption.parent is FolderMenu parentFolder)
