@@ -119,6 +119,8 @@ public class FolderMenu : MenuBlock
         }
     }
 
+    public FolderOption? parentOption { get; private set; } = null;
+
     public void BagToList()
     {
         menus = menuBag.ToList();
@@ -169,6 +171,7 @@ public class FolderMenu : MenuBlock
             subFolder.options[subFolder.cursor].selected = true;
 
             var option = new FolderOption("[folder]/" + subFolder.title, this, subFolder, () => Task.Run(() => Globals.activeScene.PushMenu(subFolder)), () => Task.Run(() => Globals.activeScene.PushMenu(new FolderMenuAlt(subFolder))));
+            subFolder.parentOption = option;
             option.tip = "Press Enter for folder options";
             option.useCounter = true;
             options.Add(option);
@@ -373,7 +376,8 @@ public class FolderMenu : MenuBlock
                 newFolder = () => Task.Run(() => folderToMove.NewFolderThenMoveToIt(this, parentOption, depth));
                 break;
             case FolderChoiceMenuPurpose.MoveFolderContents:
-                //TODO: Make this method
+                move = () => Task.Run(() => folderToMove.MoveContents(this, parentOption, depth));
+                newFolder = () => Task.Run(() => folderToMove.NewFolderThenMoveToIt(this, parentOption, depth));
                 break;
         }
         menu.options.Add(new MenuOption("Place Here" + clariflyRoot, menu, move));
@@ -383,6 +387,41 @@ public class FolderMenu : MenuBlock
             menu.options.Add(new MenuOption(subMenu.title, menu, () => Task.Run(() => Globals.activeScene.PushMenu(subMenu.menu))));
         }
         return (menu, title);
+    }
+
+    private void NewFolderThenMoveContents(FolderMenu parentFolder, MenuOption parentOption, int depth)
+    {
+        var newFolder = NewFolder(parentFolder);
+        if (newFolder.aborted)
+        {
+            return;
+        }
+        MoveContents(newFolder.newFolder, parentOption, depth);
+    }
+
+    private void MoveContents(FolderMenu target, MenuOption parentOption, int depth)
+    {
+        for (int i = menus.Count - 1; i >= 0; i--)
+        {
+            if (menus[i].optionParent != null)
+            {
+                options.Remove(menus[i].optionParent!);
+                target.options.Add(menus[i].optionParent!);
+            }
+            target.menus.Add(menus[i]);
+            menus.RemoveAt(i);
+        }
+        for (int i = subFolders.Count - 1; i >= 0; i--)
+        {
+            if (subFolders[i].parentOption != null)
+            {
+                options.Remove(subFolders[i].parentOption!);
+                target.options.Add(subFolders[i].parentOption!);
+                target.subFolders.Add(subFolders[i]);
+                subFolders.RemoveAt(i);
+            }
+        }
+        Remove();
     }
 
     private void NewFolderThenMoveToIt(FolderMenu parentFolder, MenuOption parentOption, int depth)

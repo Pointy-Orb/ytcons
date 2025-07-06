@@ -95,7 +95,7 @@ public class MenuOption
         return i;
     }
 
-    public void Draw(int i, int j, int prevMenuOffset, out int nextMenuOffset)
+    public void Draw(int i, int j, int prevMenuOffset, out int nextMenuOffset, bool justMathPlease)
     {
         if (selected && !parent.confirmed && tip != null)
         {
@@ -107,39 +107,50 @@ public class MenuOption
         {
             if (parent.confirmed && parent == Globals.activeScene.PeekMenu())
             {
-                SafeWrite(" ->   ", out drawX);
+                SafeWrite(" ->   ", out drawX, justMathPlease);
             }
             else
             {
-                SafeWrite(" >  ", out drawX);
+                SafeWrite(" >  ", out drawX, justMathPlease);
             }
         }
         else
         {
-            SafeWrite("    ", out drawX);
+            SafeWrite("    ", out drawX, justMathPlease);
         }
         if (useCounter && counter > 0)
         {
             int digits = DivideWithPowers(counter, 10) + 1;
             int preDrawX = drawX;
-            SafeWrite($"({counter}) ", out drawX);
+            SafeWrite($"({counter}) ", out drawX, justMathPlease);
+            Globals.SetForegroundColor(preDrawX, j, Globals.defaultForeground);
+            Globals.SetForegroundColor(preDrawX + digits + 1, j, Globals.defaultForeground);
             for (int l = preDrawX + 1; l <= preDrawX + digits; l++)
             {
                 Globals.SetForegroundColor(l, j, ConsoleColor.Yellow);
             }
         }
-        SafeWrite(option, out drawX);
+        SafeWrite(option, out drawX, justMathPlease);
         for (int l = prevMenuOffset; l < drawX; l++)
         {
-            SafeWrite(" ", out _);
+            SafeWrite(" ", out _, justMathPlease);
         }
         nextMenuOffset = drawX;
-        PostDraw(i, j);
+        if (!justMathPlease)
+        {
+            PostDraw(i, j);
+        }
     }
 
-    private void SafeWrite(string input, out int newX)
+    private void SafeWrite(string input, out int newX, bool justMathPlease)
     {
         newX = drawX;
+        if (justMathPlease)
+        {
+            newX = input.Length;
+            drawEnd = newX;
+            return;
+        }
         try
         {
             if (!Globals.activeScene.protectedTile[drawX, drawY])

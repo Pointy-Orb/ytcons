@@ -41,8 +41,20 @@ public class Scene
     {
     }
 
+    private int Sum(List<int> numbers)
+    {
+        var sum = 0;
+        foreach (int number in numbers)
+        {
+            sum += number;
+        }
+        return sum;
+    }
+
+    List<int> lastMenuOffsets = new();
     public void Draw()
     {
+        List<int> curMenuOffsets = new();
         if (Globals.oldWindowWidth != Console.WindowWidth || Globals.oldWindowHeight != Console.WindowHeight)
         {
             protectedTile = new bool[Console.WindowWidth, Console.WindowHeight];
@@ -53,9 +65,32 @@ public class Scene
         }
         var prevMenuOffset = 0;
         int? prevCursor = null;
+        int prevMenuDiff = 0;
         foreach (var menu in menus.Reverse())
         {
+            bool dontDrawThisOne = false;
+            if (Sum(lastMenuOffsets) > Console.WindowWidth && menu != PeekMenu())
+            {
+                lastMenuOffsets.RemoveAt(0);
+                menu.draw = false;
+                dontDrawThisOne = true;
+            }
+            else
+            {
+                menu.draw = true;
+            }
             menu.Draw(prevMenuOffset, out prevMenuOffset, prevCursor, out prevCursor);
+            curMenuOffsets.Add(prevMenuOffset - prevMenuDiff);
+            if (dontDrawThisOne)
+            {
+                prevMenuOffset = 0;
+            }
+            prevMenuDiff = prevMenuOffset;
+        }
+        lastMenuOffsets.Clear();
+        foreach (int item in curMenuOffsets)
+        {
+            lastMenuOffsets.Add(item);
         }
         PostDraw();
     }
@@ -63,7 +98,7 @@ public class Scene
     public void PushMenu(MenuBlock menu)
     {
         menus.Push(menu);
-        if(menu.options.Count > 0)
+        if (menu.options.Count > 0)
         {
             menu.options[menu.cursor].selected = true;
         }

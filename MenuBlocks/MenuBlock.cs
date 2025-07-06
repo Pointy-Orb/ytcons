@@ -7,7 +7,7 @@ public class MenuBlock
     public int drawOffset = 0;
     public AnchorType anchorType;
     public bool active { get; protected set; }
-    private bool draw = false;
+    public bool draw = false;
     public bool grayUnselected { get; set; }
     public bool resetNextTick = false;
 
@@ -127,7 +127,7 @@ public class MenuBlock
         var winHeight = Console.WindowHeight;
         nextMenuOffset = prevMenuOffset;
         drawCursor = null;
-        if (!draw || !PreDraw()) return;
+        if (!PreDraw()) return;
         int i = prevMenuOffset;
         bool overrideAnchor = options.Count() > winHeight;
         for (int j = Console.WindowTop; j < winHeight; j++)
@@ -154,7 +154,10 @@ public class MenuBlock
             }
             if (pos < options.Count && pos >= 0)
             {
-                options[pos].Draw(i, j, prevMenuOffset, out var testChildCursorOffset);
+                //V V V V V Glowy sign for where the actual drawing method happens V V V V V
+                options[pos].Draw(i, j, prevMenuOffset, out var testChildCursorOffset, !draw);
+
+
                 if (nextMenuOffset < testChildCursorOffset && (!grayUnselected || !confirmed))
                 {
                     nextMenuOffset = testChildCursorOffset;
@@ -176,6 +179,10 @@ public class MenuBlock
         else
         {
             Array.Clear(Globals.activeScene.protectedTile, 0, Globals.activeScene.protectedTile.Length);
+        }
+        if (!draw)
+        {
+            return;
         }
         PostDraw();
         foreach (MenuOption option in options)
