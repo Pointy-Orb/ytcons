@@ -1,9 +1,8 @@
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Collections.Concurrent;
-using System.Collections;
+using System.Xml;
 using System.Runtime.InteropServices;
-using System.Reflection;
 using Iso639;
 using System.Diagnostics;
 //using System.Net;
@@ -26,6 +25,7 @@ public class ExtractedVideoInfo
     public bool playing { get; private set; }
     public Process mediaPlayer = new();
     public List<string> subtitles = new();
+    public string chaptersPath = "";
 
     internal static bool gotSites = false;
 
@@ -40,6 +40,7 @@ public class ExtractedVideoInfo
         instance.uploadDate = DateOnly.ParseExact(instance.video.UploadDate, "yyyyMMdd");
         instance.gotVideo = true;
         await instance.GetSubtitles();
+        await instance.GetChapters();
         return instance;
     }
 
@@ -89,6 +90,59 @@ public class ExtractedVideoInfo
         var manualSubs = GetManualSubs();
         await autoSubs;
         await manualSubs;
+    }
+
+    private async Task GetChapters()
+    {
+        if (video.Chapters.Count <= 0)
+        {
+            return;
+        }
+        if (File.Exists(Path.Combine(Dirs.VideoIdFolder(id), "chapters.txt")))
+        {
+            chaptersPath = "--chapters-file=\"" + Path.Combine(Dirs.VideoIdFolder(id), "chapters.txt") + "\"";
+        }
+        List<string> lines = new();
+        lines.Add(";FFMETADATA1");
+        foreach (Chapter chapter in video.Chapters)
+        {
+            if (chapter.StartTime == null || chapter.EndTime == null)
+            {
+                continue;
+            }
+            lines.Add("[CHAPTER]");
+            lines.Add("TIMEBASE=1/1");
+            lines.Add("START=" + (int)chapter.StartTime);
+            lines.Add("END=" + (int)chapter.EndTime);
+            lines.Add("title=" + chapter.Title);
+        }
+        await File.WriteAllLinesAsync(Path.Combine(Dirs.VideoIdFolder(id), "chapters.txt"), lines);
+        chaptersPath = "--chapters-file=\"" + Path.Combine(Dirs.VideoIdFolder(id), "chapters.txt") + "\"";
+    }
+
+    public string ParsedDuration(double? seconds)
+    {
+        if (seconds == null)
+        {
+            return "";
+        }
+        int intSeconds = (int)seconds;
+        double milliseconds = (double)seconds - (double)intSeconds;
+        int minutes = intSeconds / 60;
+
+        var secondsString = (intSeconds % 60).ToString("D2");
+        var minutesString = (minutes % 60).ToString("D2");
+        var hoursString = (minutes / 60).ToString("D2");
+        var millisecondsString = Regex.Replace(milliseconds.ToString(), @".*\.(.*)", "$1");
+        while (millisecondsString.Length < 3)
+        {
+            millisecondsString += '0';
+        }
+        if (millisecondsString.Length > 3)
+        {
+            millisecondsString.Remove(3);
+        }
+        return $"{hoursString}:{minutesString}:{secondsString}.{millisecondsString}";
     }
 
     private async Task GetManualSubs()
@@ -191,9 +245,15 @@ public class ExtractedVideoInfo
         mediaPlayer = new();
         mediaPlayer.StartInfo.FileName = Dirs.GetPathApp("mpv");
         FormatData? videoStream = video.Formats.Where(i => i.FormatNote == resolution).Where(i => i.Acodec == "none").ToList().Find(i => i.Ext == format);
+        bool useManifest = false;
         if (videoStream == null)
         {
             videoStream = video.Formats.Where(i => i.Protocol == "https").Where(i => i.AudioChannels == null).ToList().Find(i => i.Vcodec != "none");
+            if (videoStream == null)
+            {
+                videoStream = video.Formats.Find(i => i.Resolution.Contains(Regex.Replace(resolution, @"(\d+).*", "$1")));
+                useManifest = true;
+            }
         }
         string subsAsArg = "";
         string delimiter = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ";" : ":";
@@ -205,7 +265,7 @@ public class ExtractedVideoInfo
                 subsAsArg += delimiter;
             }
         }
-        List<FormatData>? audioStreams = video.Formats.Where(i => i.AudioChannels != null).Where(i => i.Vcodec == "none").ToList();
+        List<FormatData> audioStreams = video.Formats.Where(i => i.AudioChannels != null).Where(i => i.Vcodec == "none").ToList();
         List<string> langs = new();
         foreach (FormatData audioStream in audioStreams)
         {
@@ -215,7 +275,7 @@ public class ExtractedVideoInfo
             }
         }
         var audioPath = "";
-        if (audioStreams != null)
+        if (audioStreams != null && audioStreams.Count > 0 && !useManifest)
         {
             if (langs.Count > 1)
             {
@@ -235,7 +295,7 @@ public class ExtractedVideoInfo
                 }
             }
         }
-        mediaPlayer.StartInfo.Arguments = $"{(subsAsArg == "" ? "" : "--sub-files=")}\"{subsAsArg}\" \"{videoStream.Url}\" --title=\"{video.Title} | {video.Channel}\" {audioPath}";
+        mediaPlayer.StartInfo.Arguments = $"{(subsAsArg == "" ? "" : "--sub-files=")}\"{subsAsArg}\" \"{(useManifest ? videoStream.ManifestUrl : videoStream.Url)}\" --title=\"{video.Title} | {video.Channel}\" {audioPath} {chaptersPath}";
         playing = true;
         try
         {
