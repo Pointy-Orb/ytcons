@@ -182,6 +182,7 @@ public class VideoBlock : MenuBlock
             }
             imageViewer.StartInfo.RedirectStandardInput = true;
             imageViewer.StartInfo.RedirectStandardError = true;
+            Console.Clear();
             imageViewer.Start();
             var key = Console.ReadKey();
             while (key.Key != ConsoleKey.Enter && key.Key != ConsoleKey.Spacebar && key.Key != ConsoleKey.Q)
@@ -412,16 +413,17 @@ public class VideoBlock : MenuBlock
         parsed = parsed.Replace("⁒", @"\⁒");
         parsed = parsed.Replace("▷", @"\▷");
         //parsed = parsed.Replace("<br>", "¤");
-        linkNumber = Regex.Matches(parsed, "http.?://[^ {newline}⭖]+").Count;
         parsed = parsed.Replace("</a>", "");
         parsed = parsed.Replace("&apos;", @"'");
         parsed = parsed.Replace("&quot;", "\"");
         parsed = parsed.Replace("&amp;", "&");
         parsed = parsed.Replace("&nbsp;", " ");
         parsed = Regex.Replace(parsed, @$"(http.?://[^ {newline}⭖]+)", "[⁒$1⭖]");
-        parsed = Regex.Replace(parsed, @"⁒https://www\.youtube\.com/watch\?v=([^& ⭖]+)(?:&t=[^ ⭖]+?)?", "▷$1");
-        parsed = Regex.Replace(parsed, @$"⁒https://youtu\.be/(.*)\?[^ {newline}⭖]+", "▷$1");
-        parsed = Regex.Replace(parsed, @"⁒https://www\.youtube\.com/shorts/([^ ⭖]+)", "▷$1");
+
+        linkNumber = Regex.Matches(parsed, "⁒.*?⭖").Count;
+        parsed = Regex.Replace(parsed, @$"⁒https://www\.youtube\.com/watch\?v=([^& {newline}⭖]+)(?:&.*?=[^ ⭖]+)?", "▷$1");
+        parsed = Regex.Replace(parsed, @$"⁒https://youtu\.be/([^ \?\n⭖]+)[^ {newline}⭖]*", "▷$1");
+        parsed = Regex.Replace(parsed, @$"⁒https://www\.youtube\.com/shorts/([^ ⭖{newline}]+)", "▷$1");
         return parsed;
     }
 
@@ -620,9 +622,10 @@ public class VideoBlock : MenuBlock
             else
             {
                 LoadBar.loadMessage = "Opening video";
-                LoadBar.visible = true;
+                LoadBar.StartLoad();
                 var descriptionVideo = await Scenes.DescriptionVideo.CreateAsync(links[selectedLink - 1]);
                 LoadBar.visible = false;
+                LoadBar.ClearLoad();
                 Globals.scenes.Push(descriptionVideo);
             }
         }

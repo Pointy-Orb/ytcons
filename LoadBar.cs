@@ -87,6 +87,27 @@ public static class LoadBar
         ActuallyWriteLog();
     }
 
+    public static async Task StartLoad()
+    {
+        visible = true;
+        while (visible)
+        {
+            if (prevLoadMessage.Length > loadMessage.Length) ClearLoad();
+            prevLoadMessage = loadMessage;
+
+            Console.SetCursorPosition(0, Console.WindowHeight);
+            Console.Write(loadMessage + frames[curFrame]);
+            curFrame++;
+            if (curFrame >= frames.Length)
+            {
+                curFrame = 0;
+            }
+            await Task.Delay(35);
+            if (!visible && wasVisible) ClearLoad();
+            wasVisible = visible;
+        }
+    }
+
     private static int logTime = 0;
     private static string log = "";
 

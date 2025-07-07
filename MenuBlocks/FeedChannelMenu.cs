@@ -44,7 +44,7 @@ public class FeedChannelMenu : MenuBlock
         {
             if (archiveMode == ArchiveMode.Default && Globals.activeScene is FeedScene feed)
             {
-                return feed.maxArticleAge;
+                return feed.feedSettings.maxArticleAge;
             }
             return _maxArticleAge;
         }
@@ -59,7 +59,7 @@ public class FeedChannelMenu : MenuBlock
         {
             if (archiveMode == ArchiveMode.Default && Globals.activeScene is FeedScene feed)
             {
-                return feed.maxArticleNumber;
+                return feed.feedSettings.maxArticleNumber;
             }
             return _maxArticleNumber;
         }
@@ -72,7 +72,7 @@ public class FeedChannelMenu : MenuBlock
     {
         get
         {
-            return archiveMode == ArchiveMode.LimitNumber || (archiveMode == ArchiveMode.Default && Globals.activeScene is FeedScene feed && feed.defaultArchive == ArchiveMode.LimitNumber);
+            return archiveMode == ArchiveMode.LimitNumber || (archiveMode == ArchiveMode.Default && Globals.activeScene is FeedScene feed && feed.feedSettings.defaultArchive == ArchiveMode.LimitNumber);
         }
     }
 
@@ -80,7 +80,7 @@ public class FeedChannelMenu : MenuBlock
     {
         get
         {
-            return archiveMode == ArchiveMode.LimitAge || (archiveMode == ArchiveMode.Default && Globals.activeScene is FeedScene feed && feed.defaultArchive == ArchiveMode.LimitAge);
+            return archiveMode == ArchiveMode.LimitAge || (archiveMode == ArchiveMode.Default && Globals.activeScene is FeedScene feed && feed.feedSettings.defaultArchive == ArchiveMode.LimitAge);
         }
     }
 
@@ -88,16 +88,21 @@ public class FeedChannelMenu : MenuBlock
     {
         get
         {
-            return archiveMode == ArchiveMode.DontArchive || (archiveMode == ArchiveMode.Default && Globals.activeScene is FeedScene feed && feed.defaultArchive == ArchiveMode.DontArchive);
+            return archiveMode == ArchiveMode.DontArchive || (archiveMode == ArchiveMode.Default && Globals.activeScene is FeedScene feed && feed.feedSettings.defaultArchive == ArchiveMode.DontArchive);
         }
     }
 
     public ArchiveMode archiveMode = ArchiveMode.Default;
     public ShortsStatus shortsStatus = ShortsStatus.Unified;
 
-    private readonly char[] caps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
+    private static readonly char[] caps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
 
     public string PrettifyArchiveMode(ArchiveMode archiveMode, bool addNumbers = true)
+    {
+        return PrettifyArchiveModeStatic(archiveMode, addNumbers, _maxArticleNumber, _maxArticleAge);
+    }
+
+    public static string PrettifyArchiveModeStatic(ArchiveMode archiveMode, bool addNumbers = true, int maxArticleNumber = 0, int maxArticleAge = 0)
     {
         switch (archiveMode)
         {
@@ -105,14 +110,14 @@ public class FeedChannelMenu : MenuBlock
                 var prettyNum = $"Limit Article Number";
                 if (addNumbers)
                 {
-                    prettyNum += $" ({_maxArticleNumber})";
+                    prettyNum += $" ({maxArticleNumber})";
                 }
                 return prettyNum;
             case ArchiveMode.LimitAge:
                 var prettyAge = $"Limit Article Age";
                 if (addNumbers)
                 {
-                    prettyAge += $" ({_maxArticleAge} days)";
+                    prettyAge += $" ({maxArticleAge} days)";
                 }
                 return prettyAge;
             case ArchiveMode.DontArchive:
@@ -379,6 +384,8 @@ public class FeedChannelMenu : MenuBlock
         {
             if (left.option == "Back" && right.option != "Back") return -1;
             if (right.option == "Back" && left.option != "Back") return 1;
+            if (left.option == "Settings" && right.option != "Settings") return -1;
+            if (right.option == "Settings" && left.option != "Settings") return 1;
 
             return String.Compare(left.option, right.option);
         });
@@ -427,6 +434,8 @@ public class FeedChannelMenu : MenuBlock
         {
             if (left.option == "Back" && right.option != "Back") return -1;
             if (right.option == "Back" && left.option != "Back") return 1;
+            if (left.option == "Settings" && right.option != "Settings") return -1;
+            if (right.option == "Settings" && left.option != "Settings") return 1;
 
             return string.Compare(left.option, right.option);
         });
@@ -527,6 +536,31 @@ public class FeedChannelMenu : MenuBlock
         target = folder.options.Find(predicate);
         return target;
     }
+
+    public void Remove(MenuOption parentOption, bool writeChange = true)
+    {
+        parentOption.parent.options.Remove(parentOption);
+        Globals.activeScene.PopMenu();
+        Globals.activeScene.PopMenu();
+        if (parentOption.parent is FolderMenu folder)
+        {
+            folder.menus.Remove(this);
+            if (writeChange)
+            {
+                folder.root.SaveAsXml();
+            }
+        }
+        var topMenu = Globals.activeScene.PeekMenu();
+        if (topMenu.options.Count <= 1 && topMenu is FolderMenu parentFolder)
+        {
+            parentFolder.Remove();
+        }
+        if (topMenu.cursor >= topMenu.options.Count)
+        {
+            topMenu.cursor = topMenu.options.Count - 1;
+        }
+        topMenu.options[topMenu.cursor].selected = true;
+    }
 }
 
 public class FeedChannelMenuAlt : MenuBlock
@@ -546,6 +580,8 @@ public class FeedChannelMenuAlt : MenuBlock
         var archiveModeMenu = SetArchiveModeMenu(original, setArchiveOption);
         setArchiveOption.ChangeOnSelected(() => Task.Run(() => Globals.activeScene.PushMenu(archiveModeMenu)));
         options.Add(setArchiveOption);
+
+        options.Add(new MenuOption("Remove Feed", this, ConfirmAction(() => Task.Run(() => original.Remove(parentOption)))));
 
         options.Add(new MenuOption("Move to Folder", this, () => Task.Run(() => original.MoveToFolder(parentOption, rootFolder))));
 

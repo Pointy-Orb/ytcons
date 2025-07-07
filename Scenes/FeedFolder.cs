@@ -410,7 +410,10 @@ public class FolderMenu : MenuBlock
                 newFolder = () => Task.Run(() => folderToMove.NewFolderThenMoveToIt(this, parentOption, depth));
                 break;
         }
-        menu.options.Add(new MenuOption("Place Here" + clariflyRoot, menu, move));
+        if (feedMenu == null || !menus.Contains(feedMenu))
+        {
+            menu.options.Add(new MenuOption("Place Here" + clariflyRoot, menu, move));
+        }
         menu.options.Add(new MenuOption("Make Folder Here", menu, newFolder));
         foreach ((MenuBlock menu, string title) subMenu in subMenus)
         {
@@ -511,6 +514,8 @@ public class FolderMenu : MenuBlock
         {
             if (left.option == "Back" && right.option != "Back") return -1;
             if (right.option == "Back" && left.option != "Back") return 1;
+            if (left.option == "Settings" && right.option != "Settings") return -1;
+            if (right.option == "Settings" && left.option != "Settings") return 1;
 
             return String.Compare(left.option, right.option);
         });
@@ -519,6 +524,64 @@ public class FolderMenu : MenuBlock
             Globals.activeScene.PopMenu();
         }
         root.SaveAsXml();
+    }
+
+    public MenuBlock RootSettingsMenu(FeedScene scene)
+    {
+        var menu = new MenuBlock(AnchorType.Cursor);
+        menu.options.Add(new MenuOption("Mark All as Read", this, () => Task.Run(() => MarkAllAsRead())));
+
+        menu.options.Add(new MenuOption("Fetch All Feeds", this, () => ReFetchFeeds()));
+
+        var setArchiveOption = new MenuOption($"Switch Default Archive Mode (current: {FeedChannelMenu.PrettifyArchiveModeStatic(scene.feedSettings.defaultArchive, true, scene.feedSettings.maxArticleNumber, scene.feedSettings.maxArticleAge)})", this, () => Task.Run(() => { }));
+        var archiveModeMenu = SetArchiveModeMenu(scene, setArchiveOption);
+        setArchiveOption.ChangeOnSelected(() => Task.Run(() => Globals.activeScene.PushMenu(archiveModeMenu)));
+        menu.options.Add(setArchiveOption);
+
+        return menu;
+    }
+
+    private async Task ReFetchFeeds()
+    {
+        SaveAsXml();
+        LoadBar.loadMessage = "Fetching feeds";
+        LoadBar.StartLoad();
+        var newFeedScene = await FeedScene.CreateAsync();
+        LoadBar.visible = false;
+        Globals.scenes.Pop();
+        Globals.scenes.Push(newFeedScene);
+    }
+
+    private MenuBlock SetArchiveModeMenu(FeedScene original, MenuOption parentOption)
+    {
+        var menu = new MenuBlock(AnchorType.Cursor);
+        parentOption.childMenu = menu;
+        foreach (ArchiveMode mode in Enum.GetValues(typeof(ArchiveMode)))
+        {
+            if (mode == ArchiveMode.Default)
+            {
+                continue;
+            }
+            var option = new MenuOption(FeedChannelMenu.PrettifyArchiveModeStatic(mode, false, original.feedSettings.maxArticleNumber, original.feedSettings.maxArticleAge), menu, () => Task.Run(() => original.SetDefaultArchiveMode(mode, menu, parentOption)));
+            switch (mode)
+            {
+                case ArchiveMode.ArchiveAll:
+                    option.tip = "Preserves all feed entries indefinently";
+                    break;
+                case ArchiveMode.DontArchive:
+                    option.tip = "No entries that aren't included in the feed URL are preserved";
+                    break;
+                case ArchiveMode.LimitAge:
+                    option.tip = "Removes entries that are older than a set amount of days";
+                    break;
+                case ArchiveMode.LimitNumber:
+                    option.tip = "Removes the oldest entries after the number of entries exceeds a predefined capacity";
+                    break;
+            }
+            menu.options.Add(option);
+        }
+        menu.options[menu.cursor].selected = true;
+        return menu;
     }
 }
 
@@ -531,6 +594,5 @@ public class FolderMenuAlt : MenuBlock
         options.Add(new MenuOption("Move Folder", this, () => Task.Run(() => original.MoveFolder())));
         options.Add(new MenuOption("Remove Folder", this, ConfirmAction(() => Task.Run(() => original.Remove()))));
         options.Add(new MenuOption("Move Contents and Remove", this, () => Task.Run(() => original.MoveContents())));
-        //TODO: Add "Move Contents" option that works like Move To Folder but does it to all the contents 
     }
 }

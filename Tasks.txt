@@ -1,19 +1,21 @@
 TODO:
 Iron out kinks with paged description
 Allow viewing of channel pages (and the ability to add channels to feeds)
-Allow viewing of comments section
+Allow viewing of comments section (its sorted by newest first by default (aka brainrot), make sure to fix that)
 Add settings
-Add feed settings
-Add ability to separate shorts from normal videos in feed
-Add "Move Contents" option for FolderMenuAlt
-Add the ability to remove feeds (kinda already exists, just repurpose the folder code)
-Find a way to get drawing support for Japanese characters to work
-Fix the thumbnail display (get it to work again)
-Fix youtu.be links
+Fix the thumbnail display (fix the inconsistencies)
 
 DOING:
 Integrate RSS feed
 
 DONE:
+Add feed settings
+Fix youtu.be links
+Add the ability to remove feeds (kinda already exists, just repurpose the folder code)
 Add the ability to make and destroy folders
 Make RSS feed able to actually save a feed
+Add "Move Contents" option for FolderMenuAlt
+Add ability to separate shorts from normal videos in feed
+
+HOLD:
+Find a way to get drawing support for Japanese characters to work

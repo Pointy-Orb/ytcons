@@ -290,7 +290,11 @@ public class FeedVideoOption : MenuOption
 
     private async Task OpenVideo()
     {
+        LoadBar.loadMessage = "Opening video";
+        LoadBar.StartLoad();
         var videoBlock = await VideoBlock.CreateAsync(feedData.id);
+        LoadBar.visible = false;
+        LoadBar.ClearLoad();
         if (videoBlock.selfDestruct)
         {
             videoBlock.selfDestruct = false;
