@@ -19,6 +19,7 @@ public class ExtractedVideoInfo
     };
 
     public readonly string id;
+    public DateOnly uploadDate = new();
     public VideoData video = null!;
     public bool gotVideo = false;
     public bool windowOpen = false;
@@ -36,6 +37,7 @@ public class ExtractedVideoInfo
         {
             return instance;
         }
+        instance.uploadDate = DateOnly.ParseExact(instance.video.UploadDate, "yyyyMMdd");
         instance.gotVideo = true;
         await instance.GetSubtitles();
         return instance;
@@ -261,7 +263,8 @@ public class ExtractedVideoInfo
                 if (usedLangs.Contains(audioStreams[i].Language)) continue;
 
                 //Only one audio file can be selected by default
-                bool justSelected = audioStreams[i].FormatNote.Contains("default");
+                //TODO: Make a config option that allows people to choose if they prioritize their native language or the original language of the video
+                bool justSelected = audioStreams[i].FormatNote.Contains("original");
                 justSelected = selected ? false : justSelected;
                 selected = justSelected ? true : selected;
 
@@ -291,10 +294,11 @@ public class ExtractedVideoInfo
                 }
                 audioTracks.Add($"mp.command(\"{track}\")");
             }
+            //TODO: See above todo
             audioTracks.Sort((left, right) =>
             {
-                bool leftOrig = left.Contains("default");
-                bool rightOrig = right.Contains("default");
+                bool leftOrig = left.Contains("original");
+                bool rightOrig = right.Contains("original");
 
                 if (leftOrig && !rightOrig) return -1;
                 if (!leftOrig && rightOrig) return 1;

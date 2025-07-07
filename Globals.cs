@@ -241,6 +241,11 @@ public static class Globals
         }
     }
 
+    public static string ToCamelCase(string input)
+    {
+        return Char.ToLowerInvariant(input[0]) + input[1..];
+    }
+
     internal static void Write(int i, int j, char letter)
     {
         try

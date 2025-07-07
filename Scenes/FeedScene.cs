@@ -2,6 +2,7 @@ using System.Xml;
 using YTCons.MenuBlocks;
 using System.Collections.Concurrent;
 
+
 namespace YTCons.Scenes;
 
 public class FeedScene : Scene
@@ -54,6 +55,7 @@ public class FeedScene : Scene
             }
             await Task.WhenAll(menuTasks);
             instance.root.RecursiveFolderAdding();
+            instance.root.options.Sort((left, right) => string.Compare(left.option, right.option));
             instance.root.options.Insert(0, new MenuOption("Back", instance.root, () => Task.Run(() =>
                             { LoadBar.visible = false; Globals.scenes.Pop(); })));
             instance.root.options[instance.root.cursor].selected = true;
@@ -67,7 +69,10 @@ public class FeedScene : Scene
     public static async Task MakeFeedMenuAsync(ConcurrentBag<FeedChannelMenu> bag, FeedChannelMenu.PreMenuPacket packet)
     {
         var feedMenu = await FeedChannelMenu.CreateAsync(packet);
-        bag.Add(feedMenu);
+        if (feedMenu.options.Count > 0)
+        {
+            bag.Add(feedMenu);
+        }
     }
 
     public void SaveAsXml()

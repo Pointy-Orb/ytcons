@@ -12,6 +12,7 @@ public class FeedVideoOption : MenuOption
         public string title { get; set; } = "";
         public string channelId { get; set; } = "";
         public DateTime published { get; set; } = new DateTime();
+        public bool isShort { get; set; } = false;
         public bool read { get; set; } = false;
     }
 
@@ -29,7 +30,21 @@ public class FeedVideoOption : MenuOption
         }
     }
 
-    public static async Task<List<FeedVideoOption>> CreateGroupAsync(MenuBlock parent, string sourceLink)
+    public bool AgreesWithShortsStatus(ShortsStatus shortsStatus)
+    {
+        switch (shortsStatus)
+        {
+            case ShortsStatus.FullVideosOnly:
+                return !feedData.isShort;
+            case ShortsStatus.ShortsOnly:
+                return feedData.isShort;
+            default:
+            case ShortsStatus.Unified:
+                return true;
+        }
+    }
+
+    public static async Task<List<FeedVideoOption>> CreateGroupAsync(MenuBlock parent, string sourceLink, ShortsStatus shortsStatus)
     {
         using var client = new HttpClient();
         using var source = await client.GetStreamAsync(sourceLink);
@@ -70,6 +85,10 @@ public class FeedVideoOption : MenuOption
 
                 if (!observingNode || skipObserve) continue;
                 //Actually get the data.
+                if (reader.Name == "link" && reader.GetAttribute("href") != null)
+                {
+                    instance.feedData!.isShort = reader.GetAttribute("href")!.Contains("short");
+                }
                 if (reader.Name == "yt:videoId")
                 {
                     instance.feedData.id = await reader.ReadElementContentAsStringAsync();
@@ -110,14 +129,27 @@ public class FeedVideoOption : MenuOption
         }
     }
 
+    private bool InExtraWindow(int i, int j)
+    {
+        if (j == 1)
+        {
+            Globals.Write(i, j, '─');
+            return false;
+        }
+        return j == 0;
+    }
+
     public override void PostDrawEverything()
     {
         if (!selected || parent.confirmed) return;
+        if (feedData.description == "") return;
         int descriptionCharacter = 0;
         int linkIndex = 0;
         ConsoleColor? foreground = null;
         ConsoleColor? background = null;
         var desc = feedData.description.ToCharArray();
+        var extraDesc = $"Uploaded on {feedData.published.ToString()}".ToCharArray();
+        var extraDescCharacter = 0;
         List<char> softDesc = desc.ToList();
         desc = softDesc.ToArray();
         for (int l = Console.WindowTop; l < Console.WindowHeight; l++)
@@ -126,6 +158,20 @@ public class FeedVideoOption : MenuOption
             for (int k = Console.WindowLeft; k < Console.WindowWidth; k++)
             {
                 if (!InWindow(k, l)) continue;
+                if (InExtraWindow(k, l))
+                {
+                    if (extraDescCharacter < extraDesc.Length)
+                    {
+                        Globals.Write(k, l, extraDesc[extraDescCharacter]);
+                    }
+                    else
+                    {
+                        Globals.Write(k, l, ' ');
+                    }
+                    extraDescCharacter++;
+                    continue;
+                }
+                else if (l == 1) continue;
                 try
                 {
                     Globals.activeScene.protectedTile[k, l] = true;

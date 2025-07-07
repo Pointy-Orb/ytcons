@@ -103,6 +103,18 @@ public class FolderMenu : MenuBlock
                     break;
             }
         }
+        if (xmlStream.GetAttribute("shortsStatus") != null)
+        {
+            switch (xmlStream.GetAttribute("shortsStatus"))
+            {
+                case "shortsOnly":
+                    packet.shortsStatus = ShortsStatus.ShortsOnly;
+                    break;
+                case "fullVideosOnly":
+                    packet.shortsStatus = ShortsStatus.FullVideosOnly;
+                    break;
+            }
+        }
         menuTasks.Add(FeedScene.MakeFeedMenuAsync(menuBag, packet));
     }
 
@@ -229,6 +241,10 @@ public class FolderMenu : MenuBlock
             writer.WriteAttributeString("maxArticleAge", menu.MaxArticleAgeRaw.ToString());
             writer.WriteAttributeString("markImmediatelyAsRead", menu.lowPriority ? "true" : "false");
             writer.WriteAttributeString("maxArticleNumber", menu.MaxArticleNumberRaw.ToString());
+            if (menu.shortsStatus != ShortsStatus.Unified)
+            {
+                writer.WriteAttributeString("shortsStatus", Globals.ToCamelCase(menu.shortsStatus.ToString()));
+            }
             writer.WriteAttributeString("type", "rss");
             writer.WriteAttributeString("version", "RSS");
             writer.WriteEndElement();
@@ -335,6 +351,12 @@ public class FolderMenu : MenuBlock
         Globals.activeScene.PushMenu(menu);
     }
 
+    public void MoveContents()
+    {
+        var menu = root.RecursiveMoveContentsMenu(this, parent.options.Find(i => i is FolderOption folder && folder.selected));
+        Globals.activeScene.PushMenu(menu);
+    }
+
     private enum FolderChoiceMenuPurpose
     {
         MoveFeedChannel,
@@ -352,16 +374,24 @@ public class FolderMenu : MenuBlock
         return _RecursiveFolderChoiceMenu(parentOption, FolderChoiceMenuPurpose.MoveFeedChannel, feedMenu: feedMenu).menu;
     }
 
+    public MenuBlock RecursiveMoveContentsMenu(FolderMenu folderToMove, MenuOption parentOption)
+    {
+        return _RecursiveFolderChoiceMenu(parentOption, FolderChoiceMenuPurpose.MoveFolderContents, folderToMove: folderToMove).menu;
+    }
+
     private (MenuBlock menu, string title) _RecursiveFolderChoiceMenu(MenuOption parentOption, FolderChoiceMenuPurpose purpose, int depth = 1, FolderMenu? folderToMove = null, FeedChannelMenu? feedMenu = null)
     {
         var menu = new MenuBlock(AnchorType.Cursor);
         List<(MenuBlock menu, string title)> subMenus = new();
         foreach (FolderMenu subFolder in subFolders)
         {
+            if (subFolder == folderToMove)
+            {
+                continue;
+            }
             var subMenu = subFolder._RecursiveFolderChoiceMenu(parentOption, purpose, depth + 1, folderToMove, feedMenu);
             subMenus.Add(subMenu);
         }
-
         var clariflyRoot = this.Equals(root) ? " (no folder)" : "";
         Func<Task> move = () => Task.Run(() => { });
         Func<Task> newFolder = () => Task.Run(() => { });
@@ -376,7 +406,7 @@ public class FolderMenu : MenuBlock
                 newFolder = () => Task.Run(() => folderToMove.NewFolderThenMoveToIt(this, parentOption, depth));
                 break;
             case FolderChoiceMenuPurpose.MoveFolderContents:
-                move = () => Task.Run(() => folderToMove.MoveContents(this, parentOption, depth));
+                move = () => Task.Run(() => folderToMove._MoveContents(this, parentOption, depth));
                 newFolder = () => Task.Run(() => folderToMove.NewFolderThenMoveToIt(this, parentOption, depth));
                 break;
         }
@@ -396,10 +426,10 @@ public class FolderMenu : MenuBlock
         {
             return;
         }
-        MoveContents(newFolder.newFolder, parentOption, depth);
+        _MoveContents(newFolder.newFolder, parentOption, depth);
     }
 
-    private void MoveContents(FolderMenu target, MenuOption parentOption, int depth)
+    private void _MoveContents(FolderMenu target, MenuOption parentOption, int depth)
     {
         for (int i = menus.Count - 1; i >= 0; i--)
         {
@@ -422,6 +452,7 @@ public class FolderMenu : MenuBlock
             }
         }
         Remove();
+        Globals.activeScene.PopMenu();
     }
 
     private void NewFolderThenMoveToIt(FolderMenu parentFolder, MenuOption parentOption, int depth)
@@ -476,6 +507,13 @@ public class FolderMenu : MenuBlock
 
         target.options.Add(parentOption);
         parentOption.parent = target;
+        target.options.Sort((left, right) =>
+        {
+            if (left.option == "Back" && right.option != "Back") return -1;
+            if (right.option == "Back" && left.option != "Back") return 1;
+
+            return String.Compare(left.option, right.option);
+        });
         for (int i = 0; i <= depth; i++)
         {
             Globals.activeScene.PopMenu();
@@ -490,8 +528,9 @@ public class FolderMenuAlt : MenuBlock
     {
         options.Add(new MenuOption("Rename", this, () => Task.Run(() => original.Rename(this))));
         options.Add(new MenuOption("Mark All as Read", this, () => Task.Run(() => original.MarkAllAsRead())));
-        options.Add(new MenuOption("Remove Folder", this, ConfirmAction(() => Task.Run(() => original.Remove()))));
         options.Add(new MenuOption("Move Folder", this, () => Task.Run(() => original.MoveFolder())));
+        options.Add(new MenuOption("Remove Folder", this, ConfirmAction(() => Task.Run(() => original.Remove()))));
+        options.Add(new MenuOption("Move Contents and Remove", this, () => Task.Run(() => original.MoveContents())));
         //TODO: Add "Move Contents" option that works like Move To Folder but does it to all the contents 
     }
 }

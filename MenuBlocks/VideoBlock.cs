@@ -38,6 +38,10 @@ public class VideoBlock : MenuBlock
         instance.thumbnailPath = Path.GetTempPath() + instance.videoID + ".webp";
         instance.extraData = instance.MakeExtraData();
         instance.sourceDesc = instance.FinishConstructor();
+        if (instance.sourceDesc.Length <= 0)
+        {
+            instance.sourceDesc = "(no description)".ToCharArray();
+        }
         instance.ChangeWindowSize();
         instance.gettingThumbnail = instance.ShowThumbnailInner();
         return instance;
@@ -68,7 +72,7 @@ public class VideoBlock : MenuBlock
         //extraDataBuilder.Append(" 👎 DisikeCount: " + videoInfo.video.DislikeCount.ToString());
         extraDataBuilder.Append("  │📺 Channel: " + videoInfo.video.Uploader + (videoInfo.video.ChannelIsVerified != null && (bool)videoInfo.video.ChannelIsVerified ? "" : " ✔"));
         extraDataBuilder.Append($" (目 Subs: {videoInfo.video.ChannelFollowerCount.ToString()})");
-        extraDataBuilder.Append($"  │ 𐁗  Uploaded on {videoInfo.video.UploadDate}");
+        extraDataBuilder.Append($"  │ 𐁗  Uploaded on {videoInfo.uploadDate.ToShortDateString()}");
         extraDataBuilder.Append("  │ 🕓 Duration: " + videoInfo.video.DurationString);
         return extraDataBuilder.ToString();
     }
@@ -506,7 +510,7 @@ public class VideoBlock : MenuBlock
         }
         if (j == Console.WindowHeight / 6 || j == (int)((float)Console.WindowHeight * (5f / 6f)) || j == (int)((float)Console.WindowHeight * (5f / 6f)) + 2)
         {
-            Globals.Write(i, j, Convert.ToChar("─"));
+            Globals.Write(i, j, '─');
             Globals.SetForegroundColor(i, j, Globals.defaultForeground);
             return false;
         }

@@ -14,6 +14,13 @@ public enum ArchiveMode
     DontArchive
 }
 
+public enum ShortsStatus
+{
+    Unified,
+    ShortsOnly,
+    FullVideosOnly
+}
+
 public class FeedChannelMenu : MenuBlock
 {
     public MenuOption? optionParent;
@@ -27,6 +34,9 @@ public class FeedChannelMenu : MenuBlock
     private int _maxArticleAge;
 
     private int _maxArticleNumber;
+
+    public bool hasShorts = false;
+    public bool hasFullVideos = false;
 
     public int MaxArticleAge
     {
@@ -83,6 +93,7 @@ public class FeedChannelMenu : MenuBlock
     }
 
     public ArchiveMode archiveMode = ArchiveMode.Default;
+    public ShortsStatus shortsStatus = ShortsStatus.Unified;
 
     private readonly char[] caps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
 
@@ -140,6 +151,7 @@ public class FeedChannelMenu : MenuBlock
         public bool notify;
         public bool lowPriority = false;
         public ArchiveMode archiveMode = ArchiveMode.Default;
+        public ShortsStatus shortsStatus = ShortsStatus.Unified;
     }
 
     public static async Task<FeedChannelMenu> CreateAsync(PreMenuPacket packet)
@@ -152,14 +164,23 @@ public class FeedChannelMenu : MenuBlock
             _maxArticleNumber = packet.maxArticleNumber,
             notify = packet.notify,
             archiveMode = packet.archiveMode,
-            lowPriority = packet.lowPriority
+            lowPriority = packet.lowPriority,
+            shortsStatus = packet.shortsStatus,
+            id = packet.url.Replace("https://www.youtube.com/feeds/videos.xml?channel_id=", "")
         };
-        instance.id = packet.url.Replace("https://www.youtube.com/feeds/videos.xml?channel_id=", "");
-        instance.CheckAnnihilation();
-        List<FeedVideoOption> videos = await FeedVideoOption.CreateGroupAsync(instance, packet.url);
+        if (Directory.Exists(Path.Combine(Dirs.feedsDir, instance.id)))
+        {
+            instance.CheckAnnihilation();
+        }
+        List<FeedVideoOption> videos = await FeedVideoOption.CreateGroupAsync(instance, packet.url, instance.shortsStatus);
         foreach (FeedVideoOption video in videos)
         {
-            instance.options.Add(video);
+            if (video.feedData.isShort) instance.hasShorts = true;
+            if (!video.feedData.isShort) instance.hasFullVideos = true;
+            if (video.AgreesWithShortsStatus(instance.shortsStatus))
+            {
+                instance.options.Add(video);
+            }
         }
         var files = Directory.EnumerateFiles(Path.Combine(Dirs.feedsDir, instance.id));
         foreach (string filePath in files)
@@ -172,7 +193,13 @@ public class FeedChannelMenu : MenuBlock
                 }
                 else
                 {
-                    instance.options.Add(new FeedVideoOption(instance, filePath));
+                    var video = new FeedVideoOption(instance, filePath);
+                    if (video.feedData.isShort) instance.hasShorts = true;
+                    if (!video.feedData.isShort) instance.hasFullVideos = true;
+                    if (video.AgreesWithShortsStatus(instance.shortsStatus))
+                    {
+                        instance.options.Add(video);
+                    }
                 }
             }
         }
@@ -348,6 +375,157 @@ public class FeedChannelMenu : MenuBlock
         }
         newCurMenu.options[newCurMenu.cursor].selected = true;
         parentOption.selected = false;
+        folder.options.Sort((left, right) =>
+        {
+            if (left.option == "Back" && right.option != "Back") return -1;
+            if (right.option == "Back" && left.option != "Back") return 1;
+
+            return String.Compare(left.option, right.option);
+        });
+    }
+
+    public void SplitShortsAndFullVideos(MenuOption parentOption, FolderMenu rootFolder)
+    {
+        var shortsClone = Clone(false);
+        shortsClone.title += ": Shorts";
+        shortsStatus = ShortsStatus.FullVideosOnly;
+        shortsClone.shortsStatus = ShortsStatus.ShortsOnly;
+        List<int> doomedIndexes = new();
+        foreach (MenuOption option in options)
+        {
+            if (option is FeedVideoOption video && video.feedData.isShort)
+            {
+                doomedIndexes.Add(options.IndexOf(option));
+            }
+        }
+        //Sort them greatest to least so that the indexes can just be iterated through without special considerations
+        doomedIndexes.Sort((left, right) => right.CompareTo(left));
+        foreach (int index in doomedIndexes)
+        {
+            shortsClone.options.Add(options[index]);
+            options[index].parent = shortsClone;
+            if (options[index] is FeedVideoOption video)
+            {
+                video.UpdateReadStatus();
+            }
+            options.RemoveAt(index);
+        }
+        shortsClone.options.Reverse();
+        var shortsOptionClone = new MenuOption(parentOption.option + ": Shorts", parentOption.parent, () => Task.Run(() => Globals.activeScene.PushMenu(shortsClone)), () => Task.Run(() => { }));
+        shortsOptionClone.ChangeAltOnSelected(() => Task.Run(() => Globals.activeScene.PushMenu(new FeedChannelMenuAlt(shortsClone, shortsOptionClone, rootFolder))));
+        shortsOptionClone.useCounter = !shortsClone.lowPriority;
+        shortsOptionClone.childMenu = shortsClone;
+        shortsOptionClone.tip = "Press Enter for feed options.";
+        shortsClone.optionParent = shortsOptionClone;
+        shortsClone.CheckUnreadOptions();
+        if (parentOption.parent is FolderMenu folder)
+        {
+            folder.menus.Add(shortsClone);
+        }
+        parentOption.parent.options.Add(shortsOptionClone);
+        parentOption.parent.options.Sort((left, right) =>
+        {
+            if (left.option == "Back" && right.option != "Back") return -1;
+            if (right.option == "Back" && left.option != "Back") return 1;
+
+            return string.Compare(left.option, right.option);
+        });
+        if (cursor >= options.Count)
+        {
+            cursor = options.Count - 1;
+            oldCursor = options.Count - 1;
+        }
+        rootFolder.SaveAsXml();
+        Globals.activeScene.PopMenu();
+    }
+
+    private FeedChannelMenu Clone(bool cloneOptions = true)
+    {
+        var clone = new FeedChannelMenu
+        {
+            id = this.id,
+            url = this.url,
+            title = this.title,
+            _maxArticleAge = this._maxArticleAge,
+            _maxArticleNumber = this._maxArticleNumber,
+            notify = this.notify,
+            lowPriority = this.lowPriority,
+            archiveMode = this.archiveMode,
+            shortsStatus = this.shortsStatus,
+            hasShorts = this.hasShorts,
+            hasFullVideos = this.hasFullVideos
+        };
+        if (!cloneOptions)
+        {
+            return clone;
+        }
+        foreach (MenuOption option in options)
+        {
+            clone.options.Add(option);
+        }
+        return clone;
+    }
+
+    public async Task MergeShortsAndFullVideos(MenuOption parentOption, FolderMenu rootFolder)
+    {
+        var newTitle = title;
+        if (title.EndsWith(": Shorts") && shortsStatus == ShortsStatus.ShortsOnly)
+        {
+            newTitle = title.Remove(title.Length - 8);
+        }
+        title = newTitle;
+        parentOption.option = newTitle;
+        parentOption.selected = false;
+        var packet = new PreMenuPacket
+        {
+            url = this.url,
+            title = newTitle,
+        };
+        var refreshMenu = await CreateAsync(packet);
+        options.Clear();
+        //Re-obtain the options from before the split
+        foreach (MenuOption option in refreshMenu.options)
+        {
+            options.Add(option);
+            option.parent = this;
+            if (option is FeedVideoOption video)
+            {
+                video.UpdateReadStatus();
+            }
+        }
+
+        //Get rid of the sister menu
+        shortsStatus = ShortsStatus.Unified;
+        var sisterOption = FindOption(rootFolder, i => i.childMenu is FeedChannelMenu sisterMenu && sisterMenu.id == id && sisterMenu.shortsStatus != shortsStatus);
+        if (sisterOption != null)
+        {
+            if (sisterOption.childMenu is FeedChannelMenu sisterMenu && sisterOption.parent is FolderMenu sisterFolder)
+            {
+                sisterFolder.menus.Remove(sisterMenu);
+            }
+            sisterOption.parent.options.Remove(sisterOption);
+        }
+        if (parentOption.parent.cursor >= parentOption.parent.options.Count)
+        {
+            parentOption.parent.cursor = parentOption.parent.options.Count - 1;
+        }
+        parentOption.parent.options[parentOption.parent.cursor].selected = true;
+
+
+        rootFolder.SaveAsXml();
+        Globals.activeScene.PopMenu();
+    }
+
+    private MenuOption? FindOption(FolderMenu folder, Predicate<MenuOption> predicate)
+    {
+        MenuOption? target = null;
+        foreach (FolderMenu subFolder in folder.subFolders)
+        {
+            target = FindOption(subFolder, predicate);
+            if (target != null) return target;
+        }
+        target = folder.options.Find(predicate);
+        return target;
     }
 }
 
@@ -370,6 +548,20 @@ public class FeedChannelMenuAlt : MenuBlock
         options.Add(setArchiveOption);
 
         options.Add(new MenuOption("Move to Folder", this, () => Task.Run(() => original.MoveToFolder(parentOption, rootFolder))));
+
+        if (original.hasShorts && original.hasFullVideos && original.shortsStatus == ShortsStatus.Unified)
+        {
+            var splitVideosOption = new MenuOption("Split Shorts and Full Videos", this, () => Task.Run(() => original.SplitShortsAndFullVideos(parentOption, rootFolder)));
+            splitVideosOption.tip = "Splits the feed into two fully independent feeds, one for shorts and one for full-length \"normal\" videos.";
+            options.Add(splitVideosOption);
+        }
+
+        if (original.shortsStatus != ShortsStatus.Unified)
+        {
+            var mergeVideosOption = new MenuOption("Merge With " + (original.shortsStatus == ShortsStatus.ShortsOnly ? "Full Videos" : "Shorts"), this, () => original.MergeShortsAndFullVideos(parentOption, rootFolder));
+            mergeVideosOption.tip = $"Merges the feed with the feed from the same channel for {(original.shortsStatus == ShortsStatus.ShortsOnly ? "full videos" : "shorts")}.";
+            options.Add(mergeVideosOption);
+        }
 
         options[cursor].selected = true;
     }
