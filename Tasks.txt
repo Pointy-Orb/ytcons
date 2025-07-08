@@ -6,6 +6,7 @@ Add settings
 Fix the thumbnail display (fix the inconsistencies)
 Allow the ability to open the program with a URL as an argument and have that video load up
 Add "Add channel from ID/handle/name/whatever" option to global feed settings
+Update explainthisplz.txt to accomldate the new local stuff
 
 DOING:
 Integrate RSS feed
