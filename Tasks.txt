@@ -4,6 +4,8 @@ Allow viewing of channel pages (and the ability to add channels to feeds)
 Allow viewing of comments section (its sorted by newest first by default (aka brainrot), make sure to fix that)
 Add settings
 Fix the thumbnail display (fix the inconsistencies)
+Allow the ability to open the program with a URL as an argument and have that video load up
+Add "Add channel from ID/handle/name/whatever" option to global feed settings
 
 DOING:
 Integrate RSS feed

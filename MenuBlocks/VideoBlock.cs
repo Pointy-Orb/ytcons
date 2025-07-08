@@ -113,8 +113,23 @@ public class VideoBlock : MenuBlock
             confirmDownload.options[confirmDownload.cursor].selected = true;
             Globals.activeScene.PushMenu(confirmDownload);
         })));
+        if (!(Globals.activeScene is Scenes.ChannelScene channel))
+        {
+            options.Add(new MenuOption($"Visit Channel ({videoInfo.video.Channel})", this, () => VisitChannel()));
+        }
         options[cursor].selected = true;
         return ParseDescription(videoInfo.video.Description).ToCharArray();
+    }
+
+    private async Task VisitChannel()
+    {
+        LoadBar.loadMessage = "Getting channel data";
+        LoadBar.StartLoad();
+        var scene = await Scenes.ChannelScene.CreateAsync(videoInfo.video.ChannelId);
+        LoadBar.visible = false;
+        LoadBar.ClearLoad();
+        Globals.scenes.Push(scene);
+        resetNextTick = true;
     }
 
     private async Task PlayAsync()

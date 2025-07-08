@@ -82,6 +82,7 @@ public class MenuBlock
     {
         if (resetNextTick)
         {
+            if (Globals.debug) LoadBar.WriteLog("i reset");
             resetNextTick = false;
             Reset();
         }
@@ -103,12 +104,12 @@ public class MenuBlock
                 await selectedOption.OnSelected();
             }
             active = false;
+            if (Globals.debug)
+            {
+                Console.WriteLine("Finished on selected: " + selectedOption.option);
+            }
         }
         oldCursor = cursor;
-        foreach (MenuOption option in options)
-        {
-            option.Update();
-        }
     }
 
     protected virtual void OnUpdate()
@@ -132,7 +133,8 @@ public class MenuBlock
         bool overrideAnchor = options.Count() > winHeight;
         for (int j = Console.WindowTop; j < winHeight; j++)
         {
-            var pos = j - drawOffset;
+            var pos = j;
+            pos -= drawOffset;
             if (anchorType == AnchorType.Center || ((anchorType == AnchorType.Cursor || overrideAnchor) && prevDrawCursor == null))
             {
                 pos -= winHeight / 2;

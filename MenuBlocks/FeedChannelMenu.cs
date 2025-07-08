@@ -153,7 +153,7 @@ public class FeedChannelMenu : MenuBlock
         public required string title;
         public int maxArticleAge = 60;
         public int maxArticleNumber = 1000;
-        public bool notify;
+        public bool notify = false;
         public bool lowPriority = false;
         public ArchiveMode archiveMode = ArchiveMode.Default;
         public ShortsStatus shortsStatus = ShortsStatus.Unified;
@@ -237,6 +237,12 @@ public class FeedChannelMenu : MenuBlock
     {
         if (optionParent == null) return;
         optionParent.counter--;
+    }
+
+    public void DecrementUnreadBackwards()
+    {
+        if (optionParent == null) return;
+        optionParent.counter++;
     }
 
     public void MarkAllAsRead()
@@ -561,6 +567,17 @@ public class FeedChannelMenu : MenuBlock
         }
         topMenu.options[topMenu.cursor].selected = true;
     }
+
+    public async Task VisitChannel(FeedChannelMenuAlt alt)
+    {
+        LoadBar.loadMessage = "Getting channel data";
+        LoadBar.StartLoad();
+        var scene = await Scenes.ChannelScene.CreateAsync(id);
+        LoadBar.visible = false;
+        LoadBar.ClearLoad();
+        Globals.scenes.Push(scene);
+        alt.resetNextTick = true;
+    }
 }
 
 public class FeedChannelMenuAlt : MenuBlock
@@ -584,6 +601,8 @@ public class FeedChannelMenuAlt : MenuBlock
         options.Add(new MenuOption("Remove Feed", this, ConfirmAction(() => Task.Run(() => original.Remove(parentOption)))));
 
         options.Add(new MenuOption("Move to Folder", this, () => Task.Run(() => original.MoveToFolder(parentOption, rootFolder))));
+
+        options.Add(new MenuOption("Visit Channel", this, () => original.VisitChannel(this)));
 
         if (original.hasShorts && original.hasFullVideos && original.shortsStatus == ShortsStatus.Unified)
         {

@@ -134,6 +134,10 @@ public static class Globals
             Array.Clear(foregroundColor, 0, foregroundColor.Length);
             Array.Clear(backgroundColor, 0, backgroundColor.Length);
         }
+        if (debug)
+        {
+            Write(0, 0, activeScene.ToString() + DateTime.Now.ToString());
+        }
         activeScene.Draw();
         try
         {

@@ -64,6 +64,25 @@ public class FeedScene : Scene
                 }
                 curFolder.CheckForChannels(xmlStream, menuTasks);
             }
+            if (File.Exists(Path.Combine(Dirs.feedsDir, "feedsPending.json")))
+            {
+                var queueJson = await File.ReadAllTextAsync(Path.Combine(Dirs.feedsDir, "feedsPending.json"));
+                var pendingFeeds = JsonConvert.DeserializeObject<List<(string title, string id)>>(queueJson);
+                if (pendingFeeds == null)
+                {
+                    pendingFeeds = new();
+                }
+                foreach ((string title, string id) feed in pendingFeeds)
+                {
+                    var packet = new FeedChannelMenu.PreMenuPacket
+                    {
+                        title = feed.title,
+                        url = "https://www.youtube.com/feeds/videos.xml?channel_id=" + feed.id
+                    };
+                    menuTasks.Add(MakeFeedMenuAsync(instance.root.menuBag, packet));
+                }
+                File.Delete(Path.Combine(Dirs.feedsDir, "feedsPending.json"));
+            }
             await Task.WhenAll(menuTasks);
             instance.root.RecursiveFolderAdding();
             instance.root.options.Sort((left, right) => string.Compare(left.option, right.option));

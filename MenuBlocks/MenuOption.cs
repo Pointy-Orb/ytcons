@@ -68,11 +68,6 @@ public class MenuOption
         await task;
     }
 
-    public void Update()
-    {
-
-    }
-
     int drawX;
     int drawY;
 
@@ -149,6 +144,10 @@ public class MenuOption
         {
             newX = input.Length;
             drawEnd = newX;
+            return;
+        }
+        if (String.IsNullOrEmpty(input))
+        {
             return;
         }
         try

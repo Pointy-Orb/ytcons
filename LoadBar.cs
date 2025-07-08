@@ -95,6 +95,7 @@ public static class LoadBar
             if (prevLoadMessage.Length > loadMessage.Length) ClearLoad();
             prevLoadMessage = loadMessage;
 
+            Console.ForegroundColor = Globals.defaultForeground;
             Console.SetCursorPosition(0, Console.WindowHeight);
             Console.Write(loadMessage + frames[curFrame]);
             curFrame++;

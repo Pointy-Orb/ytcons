@@ -144,9 +144,6 @@ public class FeedVideoOption : MenuOption
         if (!selected || parent.confirmed) return;
         if (feedData.description == "") return;
         int descriptionCharacter = 0;
-        int linkIndex = 0;
-        ConsoleColor? foreground = null;
-        ConsoleColor? background = null;
         var desc = feedData.description.ToCharArray();
         var extraDesc = $"Uploaded on {feedData.published.ToString()}".ToCharArray();
         var extraDescCharacter = 0;
@@ -190,49 +187,11 @@ public class FeedVideoOption : MenuOption
                     newLining = true;
                     continue;
                 }
-                if (desc[descriptionCharacter] == Convert.ToChar("⁒") || desc[descriptionCharacter] == Convert.ToChar("▷") && Globals.CheckNoEscape(descriptionCharacter, desc))
-                {
-                    var red = false;
-                    linkIndex++;
-                    if (desc[descriptionCharacter] == Convert.ToChar("▷"))
-                    {
-                        foreground = ConsoleColor.Red;
-                        red = true;
-                    }
-                    else
-                    {
-                        foreground = ConsoleColor.Blue;
-                    }
-                    Globals.Write(k, l, Convert.ToChar(red ? "⏵" : "⇱"));
-                    Globals.SetForegroundColor(k, l, (ConsoleColor)foreground);
-                    descriptionCharacter++;
-                    continue;
-                }
-                else if (desc[descriptionCharacter] == Convert.ToChar("⭖") && Globals.CheckNoEscape(descriptionCharacter, desc))
-                {
-                    foreground = null;
-                    background = null;
-                    Globals.Write(k, l, Convert.ToChar(" "));
-                    descriptionCharacter++;
-                    continue;
-                }
-                if (foreground != null)
-                {
-                    Globals.SetForegroundColor(k, l, (ConsoleColor)foreground);
-                }
-                else
-                {
-                    Globals.SetForegroundColor(k, l, Globals.defaultForeground);
-                }
-                if (background != null)
-                {
-                    Globals.SetBackgroundColor(k, l, (ConsoleColor)background);
-                }
                 if (desc[descriptionCharacter] != Convert.ToChar(" "))
                 {
                     for (int m = descriptionCharacter; m < desc.Length; m++)
                     {
-                        if (desc[l] == Convert.ToChar(" "))
+                        if (desc[m] == Convert.ToChar(" "))
                         {
                             if (m - descriptionCharacter >= windowWidth)
                             {
@@ -240,7 +199,7 @@ public class FeedVideoOption : MenuOption
                             }
                             break;
                         }
-                        if (!InWindow(k + m - descriptionCharacter, m))
+                        if (k + m - descriptionCharacter + 1 > Console.WindowWidth)
                         {
                             newLining = true;
                         }
@@ -313,6 +272,18 @@ public class FeedVideoOption : MenuOption
             var feedJson = JsonConvert.SerializeObject(feedData);
             await File.WriteAllTextAsync(GetJsonPath(), feedJson);
         }
+        videoBlock.options.Add(new MenuOption("Mark as Unread", videoBlock, () => Task.Run(async () =>
+        {
+            feedData.read = false;
+            if (parent is FeedChannelMenu feedMenu)
+            {
+                feedMenu.DecrementUnreadBackwards();
+            }
+            UpdateReadStatus();
+            var feedJson = JsonConvert.SerializeObject(feedData);
+            await File.WriteAllTextAsync(GetJsonPath(), feedJson);
+            Globals.activeScene.PopMenu();
+        })));
     }
 
     public string GetJsonPath()
