@@ -1,20 +1,24 @@
 TODO:
 Iron out kinks with paged description
-Allow viewing of channel pages (and the ability to add channels to feeds)
 Allow viewing of comments section (its sorted by newest first by default (aka brainrot), make sure to fix that)
 Add settings
 Fix the thumbnail display (fix the inconsistencies)
-Allow the ability to open the program with a URL as an argument and have that video load up
+Give the ability to search a specific channel
 Add "Add channel from ID/handle/name/whatever" option to global feed settings
+Have "all feeds" option update dynamically
+Add config option for default media player
+Add config option for default resolution and format for playback
 
 DOING:
 Integrate RSS feed
 
 DONE:
+Allow the ability to open the program with a URL as an argument and have that video load up
 Add feed settings
 Fix youtu.be links
 Add the ability to remove feeds (kinda already exists, just repurpose the folder code)
 Add the ability to make and destroy folders
+Allow viewing of channel pages (and the ability to add channels to feeds)
 Make RSS feed able to actually save a feed
 Add "Move Contents" option for FolderMenuAlt
 Add ability to separate shorts from normal videos in feed

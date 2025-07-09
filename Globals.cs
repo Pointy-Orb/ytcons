@@ -18,13 +18,10 @@ public static class Globals
     internal static Scene activeScene => scenes.Peek();
 
     public static bool debug = false;
-    //This flag is for debugging purposes and should not be set to true by the average user unless they like errors or are just that impatient
-    public static bool noCheckStream = false;
 
     internal static async Task Init(string[] args)
     {
         debug = args.Contains("--debug");
-        noCheckStream = args.Contains("--no-check-stream");
         LoadBar.loadMessage = "Getting available sites";
         LoadBar.visible = true;
         //await ExtractedVideoInfo.GetSites();
@@ -39,9 +36,61 @@ public static class Globals
         }
         if (Dirs.TryGetPathApp("yt-dlp") == null)
         {
-            LoadBar.WriteLog($"yt-dlp not found. Install for {(Dirs.TryGetPathApp("ffmpeg") == null ? "the ability to make" : "more efficient")} downloads.");
+            LoadBar.WriteLog($"yt-dlp not found in the environment path. This app is required to get the video metadata used by this program.");
+            Console.ReadKey(true);
+            Exit(1);
         }
+        if (Dirs.TryGetPathApp("mpv") == null)
+        {
+            LoadBar.WriteLog($"mpv not found in the environment path. This app is required to play back the Youtube videos.");
+            Console.ReadKey(true);
+            Exit(1);
+        }
+        using var client = new HttpClient();
         scenes.Push(scene);
+        bool pushedArgScene = false;
+        scene.RootMenu.options[scene.RootMenu.cursor].selected = false;
+        foreach (string arg in args)
+        {
+            if (arg == "--debug") continue;
+            var url = new Uri($"https://youtu.be/{arg}");
+            if ((arg.Contains("youtu.be") || arg.Contains("youtube.com")) && !(arg.Contains("list")))
+            {
+                url = new Uri(arg);
+            }
+            using var response = await client.GetAsync(url);
+            if (!response.IsSuccessStatusCode) continue;
+            bool isChannel = arg.Contains("channel") || arg.Contains("c/") || arg.Contains("@") || arg.Length > 11;
+
+            try
+            {
+                if (!isChannel)
+                {
+                    var descScene = await DescriptionVideo.CreateAsync(arg);
+                    scene.RootMenu.options.Insert(0, new MenuBlocks.MenuOption(descScene.info.video.Title, descScene.RootMenu, () => Task.Run(() => { scene.RootMenu.resetNextTick = true; scenes.Push(descScene); })));
+                    if (!pushedArgScene)
+                    {
+                        scenes.Push(descScene);
+                        pushedArgScene = true;
+                    }
+                }
+                else
+                {
+                    var channelScene = await ChannelScene.CreateAsync(arg);
+                    scene.RootMenu.options.Insert(0, new MenuBlocks.MenuOption(channelScene.channelData.Channel, channelScene.RootMenu, () => Task.Run(() => { scene.RootMenu.resetNextTick = true; scenes.Push(channelScene); })));
+                    if (!pushedArgScene)
+                    {
+                        scenes.Push(channelScene);
+                        pushedArgScene = true;
+                    }
+                }
+            }
+            catch
+            {
+                LoadBar.WriteLog("Invalid url in argument.");
+            }
+        }
+        scene.RootMenu.options[scene.RootMenu.cursor].selected = true;
     }
 
     internal static int oldWindowWidth = Console.WindowWidth;

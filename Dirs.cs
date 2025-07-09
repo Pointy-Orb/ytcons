@@ -1,4 +1,3 @@
-using YTCons.UserExp;
 using static System.Environment;
 using System.Runtime.InteropServices;
 
@@ -73,12 +72,6 @@ public static class Dirs
         {
             var local = Path.Combine(GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify), "ytcons");
             Directory.CreateDirectory(local);
-            var noobGuide = Path.Combine(local, "explainthisplz.txt");
-            if (!File.Exists(noobGuide))
-            {
-                //Write a file to the local directory that tells curious eyes what these variable are for.
-                File.WriteAllLines(noobGuide, ExplainStuff.LocalFiles);
-            }
             return local;
         }
     }

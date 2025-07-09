@@ -318,13 +318,13 @@ public class ExtractedVideoInfo
             List<string> audioTracks = new();
             List<string> usedLangs = new();
             bool selected = false;
+            string origOrDefault = Settings.systemLanguageAudio ? "default" : "original";
             for (int i = 0; i < audioStreams.Count; i++)
             {
                 if (usedLangs.Contains(audioStreams[i].Language)) continue;
 
                 //Only one audio file can be selected by default
-                //TODO: Make a config option that allows people to choose if they prioritize their native language or the original language of the video
-                bool justSelected = audioStreams[i].FormatNote.Contains("original");
+                bool justSelected = audioStreams[i].FormatNote.Contains(origOrDefault);
                 justSelected = selected ? false : justSelected;
                 selected = justSelected ? true : selected;
 
@@ -354,11 +354,10 @@ public class ExtractedVideoInfo
                 }
                 audioTracks.Add($"mp.command(\"{track}\")");
             }
-            //TODO: See above todo
             audioTracks.Sort((left, right) =>
             {
-                bool leftOrig = left.Contains("original");
-                bool rightOrig = right.Contains("original");
+                bool leftOrig = left.Contains(origOrDefault);
+                bool rightOrig = right.Contains(origOrDefault);
 
                 if (leftOrig && !rightOrig) return -1;
                 if (!leftOrig && rightOrig) return 1;

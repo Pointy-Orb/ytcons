@@ -2,7 +2,6 @@ namespace YTCons;
 
 public static class Settings
 {
-    public static bool permasaveSubtitles = false;
-
-    public static bool alwaysCheckStreams = false;
+    public static bool permasaveSubtitles { get; set; } = false;
+    public static bool systemLanguageAudio { get; set; } = false;
 }

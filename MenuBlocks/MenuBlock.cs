@@ -123,6 +123,7 @@ public class MenuBlock
 
     private int? cursorAnchorPos = null;
 
+    public bool overrideAnchor = false;
     public void Draw(int prevMenuOffset, out int nextMenuOffset, int? prevDrawCursor, out int? drawCursor)
     {
         var winHeight = Console.WindowHeight;
@@ -130,7 +131,7 @@ public class MenuBlock
         drawCursor = null;
         if (!PreDraw()) return;
         int i = prevMenuOffset;
-        bool overrideAnchor = options.Count() > winHeight;
+        overrideAnchor = options.Count() > winHeight;
         for (int j = Console.WindowTop; j < winHeight; j++)
         {
             var pos = j;
@@ -160,11 +161,11 @@ public class MenuBlock
                 options[pos].Draw(i, j, prevMenuOffset, out var testChildCursorOffset, !draw);
 
 
-                if (nextMenuOffset < testChildCursorOffset && (!grayUnselected || !confirmed))
+                if (nextMenuOffset < testChildCursorOffset && (!grayUnselected || !overrideAnchor || !confirmed))
                 {
                     nextMenuOffset = testChildCursorOffset;
                 }
-                if (grayUnselected && options[pos].selected && confirmed)
+                if ((grayUnselected || overrideAnchor) && options[pos].selected && confirmed)
                 {
                     nextMenuOffset = testChildCursorOffset;
                 }

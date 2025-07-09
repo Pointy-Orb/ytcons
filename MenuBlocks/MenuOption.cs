@@ -154,14 +154,14 @@ public class MenuOption
         {
             if (!Globals.activeScene.protectedTile[drawX, drawY])
             {
-                if (!selected && parent.confirmed && parent.grayUnselected)
+                if (!selected && parent.confirmed && (parent.grayUnselected || parent.overrideAnchor))
                 {
                     for (int i = drawX; i < input.Length + drawX; i++)
                     {
                         Globals.SetForegroundColor(i, drawY, ConsoleColor.DarkGray);
                     }
                 }
-                else if (!parent.grayUnselected)
+                else
                 {
                     for (int i = drawX; i < input.Length + drawX; i++)
                     {
@@ -180,7 +180,7 @@ public class MenuOption
                     Globals.SetForegroundColor(i, drawY, ConsoleColor.DarkGray);
                 }
             }
-            else if (!parent.grayUnselected)
+            else
             {
                 for (int i = drawX; i < input.Length + drawX; i++)
                 {

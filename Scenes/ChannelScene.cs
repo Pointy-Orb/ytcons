@@ -13,10 +13,10 @@ namespace YTCons.Scenes
         public static async Task<ChannelScene> CreateAsync(string channelId)
         {
             var instance = new ChannelScene(channelId);
-            if (!File.Exists(Path.Combine(Path.GetTempPath(), $"{channelId}.json")))
+            if (!File.Exists(Path.Combine(Path.GetTempPath(), $"{channelId}.json")) || channelId.Contains('@'))
             {
                 var ytdlp = YtdlpFactory(channelId);
-                using var jsonStream = File.Create(Path.Combine(Path.GetTempPath(), $"{channelId}.json"));
+                using var jsonStream = File.Create(Path.Combine(Path.GetTempPath(), $"{channelId.Replace("@", "")}.json"));
                 using var jsonWriter = new StreamWriter(jsonStream);
                 ytdlp.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
                 {
@@ -35,10 +35,20 @@ namespace YTCons.Scenes
                     return instance;
                 }
             }
-            var dataJson = await File.ReadAllTextAsync(Path.Combine(Path.GetTempPath(), $"{channelId}.json"));
+            var dataJson = await File.ReadAllTextAsync(Path.Combine(Path.GetTempPath(), $"{channelId.Replace("@", "")}.json"));
             instance.channelData = JsonConvert.DeserializeObject<ChannelData>(dataJson)!;
-            var menu = new MenuBlock();
-            menu.options.Add(new MenuOption("Back", menu, () => Task.Run(() => { LoadBar.visible = false; Globals.scenes.Pop(); })));
+            instance.channelId = instance.channelData.ChannelId;
+            var menu = new MenuBlock(AnchorType.Top);
+            menu.options.Add(new MenuOption("Back", menu, () => Task.Run(() => { LoadBar.visible = false; menu.resetNextTick = true; Globals.scenes.Pop(); })));
+            foreach (VideoType value in typeof(VideoType).GetEnumValues())
+            {
+                var videoTypeMenu = instance.VideosMenu(value);
+                if (videoTypeMenu.options.Count > 0)
+                {
+                    menu.options.Add(new MenuOption(value.ToString(), menu, () => Task.Run(() => instance.PushMenu(videoTypeMenu))));
+                }
+            }
+            /*
             var videosMenu = instance.VideosMenu();
             if (videosMenu.options.Count > 0)
             {
@@ -50,6 +60,7 @@ namespace YTCons.Scenes
             {
                 menu.options.Add(new MenuOption("Shorts", menu, () => Task.Run(() => instance.PushMenu(shortsMenu))));
             }
+			*/
             //TODO: Add the ability to search a specific channel
             bool addTheFeedOption = true;
             if (File.Exists(Path.Combine(Dirs.feedsDir, "feedsPending.json")))
@@ -111,22 +122,56 @@ namespace YTCons.Scenes
             }
         }
 
-        private MenuBlock VideosMenu(bool shorts = false)
+        private enum VideoType
         {
-            //TODO: Add support for livestreams as well
+            Videos,
+            Shorts,
+            Livestreams
+        }
+
+        private MenuBlock VideosMenu(VideoType videoType = VideoType.Videos)
+        {
             bool hasLive = channelData.Entries.Count > 2;
             bool videosOnly = channelData.Channel != channelData.Title && channelData.Title.EndsWith("Videos");
             bool shortsOnly = channelData.Channel != channelData.Title && channelData.Title.EndsWith("Shorts");
+            bool streamsOnly = channelData.Channel != channelData.Title && channelData.Title.EndsWith("Live");
             var menu = new MenuBlock(AnchorType.Cursor);
-            if (videosOnly && shorts)
+            switch (videoType)
             {
-                return menu;
+                case VideoType.Videos:
+                    if (shortsOnly || streamsOnly)
+                    {
+                        return menu;
+                    }
+                    break;
+                case VideoType.Shorts:
+                    if (videosOnly || streamsOnly)
+                    {
+                        return menu;
+                    }
+                    break;
+                case VideoType.Livestreams:
+                    if (videosOnly || shortsOnly)
+                    {
+                        return menu;
+                    }
+                    break;
             }
-            if (shortsOnly && !shorts)
+            var entryType = 0;
+            switch (videoType)
             {
-                return menu;
+                case VideoType.Shorts:
+                    entryType = channelData.Entries.Count - 1;
+                    break;
+                case VideoType.Livestreams:
+                    entryType = 1;
+                    break;
+                case VideoType.Videos:
+                default:
+                    break;
             }
-            var entries = channelData.Entries[shorts ? (hasLive ? 2 : 1) : 0].Entries;
+            entryType = Int32.Clamp(entryType, 0, channelData.Entries.Count - 1);
+            var entries = channelData.Entries[entryType].Entries;
             if (videosOnly || shortsOnly)
             {
                 entries = channelData.Entries;
@@ -201,14 +246,7 @@ namespace YTCons.Scenes
                         Globals.Write(i, j, '─');
                         continue;
                     }
-                    if (j > Console.WindowHeight / 2)
-                    {
-                        RootMenu.drawOffset = j + 5;
-                    }
-                    else
-                    {
-                        RootMenu.drawOffset = 0;
-                    }
+                    RootMenu.drawOffset = j + 5;
                     break;
                 }
                 bool newLining = false;
@@ -297,7 +335,16 @@ namespace YTCons.Scenes
         {
             var process = new Process();
             process.StartInfo.FileName = Dirs.GetPathApp("yt-dlp");
-            process.StartInfo.Arguments = $"--flat-playlist -J https://www.youtube.com/channel/{id}";
+            var link = $"https://www.youtube.com/channel/{id}";
+            if (id.Contains('@'))
+            {
+                link = $"https://www.youtube.com/{id}";
+            }
+            if (id.Contains("https://"))
+            {
+                link = id;
+            }
+            process.StartInfo.Arguments = $"--flat-playlist -J {link}";
             process.StartInfo.RedirectStandardOutput = true;
             if (!Globals.debug)
             {
