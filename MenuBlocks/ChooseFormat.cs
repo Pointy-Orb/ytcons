@@ -1,5 +1,3 @@
-using YoutubeDLSharp.Metadata;
-
 namespace YTCons.MenuBlocks;
 
 public class ChooseFormat : MenuBlock
