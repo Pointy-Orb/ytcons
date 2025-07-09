@@ -161,7 +161,7 @@ public class MenuBlock
                 options[pos].Draw(i, j, prevMenuOffset, out var testChildCursorOffset, !draw);
 
 
-                if (nextMenuOffset < testChildCursorOffset && (!grayUnselected || !overrideAnchor || !confirmed))
+                if (nextMenuOffset < testChildCursorOffset && (!(grayUnselected || overrideAnchor) || !confirmed))
                 {
                     nextMenuOffset = testChildCursorOffset;
                 }

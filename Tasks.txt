@@ -1,16 +1,17 @@
 TODO:
 Iron out kinks with paged description
 Allow viewing of comments section (its sorted by newest first by default (aka brainrot), make sure to fix that)
-Add settings
 Fix the thumbnail display (fix the inconsistencies)
 Give the ability to search a specific channel
 Add "Add channel from ID/handle/name/whatever" option to global feed settings
 Have "all feeds" option update dynamically
 Add config option for default media player
 Add config option for default resolution and format for playback
+Fix drawing issues when having description window open on channel page
 
 DOING:
 Integrate RSS feed
+Add settings
 
 DONE:
 Allow the ability to open the program with a URL as an argument and have that video load up

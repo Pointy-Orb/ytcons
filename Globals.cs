@@ -15,6 +15,8 @@ public static class Globals
 
     internal static Stack<Scene> scenes = new();
 
+    internal static Settings settings = new();
+
     internal static Scene activeScene => scenes.Peek();
 
     public static bool debug = false;
@@ -60,7 +62,7 @@ public static class Globals
             }
             using var response = await client.GetAsync(url);
             if (!response.IsSuccessStatusCode) continue;
-            bool isChannel = arg.Contains("channel") || arg.Contains("c/") || arg.Contains("@") || arg.Length > 11;
+            bool isChannel = arg.Contains("channel") || arg.Contains("c/") || arg.Contains("@");
 
             try
             {

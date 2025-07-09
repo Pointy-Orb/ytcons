@@ -135,8 +135,9 @@ public class VideoBlock : MenuBlock
     private async Task PlayAsync()
     {
         active = false;
-        activeBecause = InactiveReason.Playing;
+        resetNextTick = true;
         await videoInfo.Play();
+        Console.Clear();
     }
 
     private Process imageViewer = new();
@@ -223,12 +224,6 @@ public class VideoBlock : MenuBlock
             selfDestruct = false;
         }
         if (activeBecause == InactiveReason.ShowingDeets && !videoInfo.windowOpen)
-        {
-            activeBecause = InactiveReason.Active;
-            Reset();
-            Console.Clear();
-        }
-        if (activeBecause == InactiveReason.Playing && videoInfo.mediaPlayer.HasExited)
         {
             activeBecause = InactiveReason.Active;
             Reset();

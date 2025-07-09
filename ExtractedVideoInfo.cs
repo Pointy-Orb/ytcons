@@ -69,7 +69,27 @@ public class ExtractedVideoInfo
             {
                 LoadBar.WriteLog("yt-dlp failed to grab metadata");
                 success = false;
+                string? error;
+                while ((error = ytdlp.StandardError.ReadLine()) != null)
+                {
+                    if (error.Contains("ERROR"))
+                    {
+                        LoadBar.WriteLog(error);
+                        break;
+                    }
+                }
                 return;
+            }
+            string? line;
+            while ((line = ytdlp.StandardError.ReadLine()) != null)
+            {
+                if (line.Contains("This live event"))
+                {
+                    success = false;
+                    var logString = line.Replace($"ERROR: [youtube] {id}: ", "");
+                    LoadBar.WriteLog(logString);
+                    return;
+                }
             }
         }
         try
@@ -79,7 +99,7 @@ public class ExtractedVideoInfo
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Exception: " + ex.Message);
+            LoadBar.WriteLog("Exception: " + ex.Message);
             throw;
         }
     }
@@ -152,7 +172,8 @@ public class ExtractedVideoInfo
         foreach (string lang in video.Subtitles.Keys)
         {
             if (video.Subtitles[lang][0].Name == null) continue;
-            var subPath = Path.Combine(Dirs.VideoIdFolder(id), Dirs.MakeFileSafe(video.Subtitles[lang][0].Name, true, true) + $".{lang}.srt");
+            var subFolder = Globals.settings.permasaveSubtitles ? Path.Combine(Dirs.localDir, id) : Dirs.VideoIdFolder(id);
+            var subPath = Path.Combine(subFolder, Dirs.MakeFileSafe(video.Subtitles[lang][0].Name, true, true) + $".{lang}.srt");
             if (File.Exists(subPath))
             {
                 subtitles.Add(subPath);
@@ -185,7 +206,8 @@ public class ExtractedVideoInfo
                 language = "en";
             }
         }
-        var subPath = Path.Combine(Dirs.VideoIdFolder(id), language + $"-auto.{language}.srt");
+        var subFolder = Globals.settings.permasaveSubtitles ? Path.Combine(Dirs.localDir, id) : Dirs.VideoIdFolder(id);
+        var subPath = Path.Combine(subFolder, language + $"-auto.{language}.srt");
         if (File.Exists(subPath))
         {
             subtitles.Add(subPath);
@@ -240,11 +262,30 @@ public class ExtractedVideoInfo
         return process;
     }
 
-    public async Task Play(string format = "mp4", string resolution = "720p")
+    public async Task Play(string? format = null, string? resolution = null)
+    {
+        var rFormat = format;
+        var rResolution = resolution;
+        if (rFormat == null)
+        {
+            rFormat = Globals.settings.chosenFormat;
+        }
+        if (rResolution == null)
+        {
+            rResolution = Globals.settings.chosenResolution;
+        }
+        await PlayMpv(rFormat, rResolution);
+    }
+
+    private async Task PlayMpv(string format = "mp4", string resolution = "720p")
     {
         mediaPlayer = new();
         mediaPlayer.StartInfo.FileName = Dirs.GetPathApp("mpv");
         FormatData? videoStream = video.Formats.Where(i => i.FormatNote == resolution).Where(i => i.Acodec == "none").ToList().Find(i => i.Ext == format);
+        if (resolution == "Highest")
+        {
+            videoStream = video.Formats.Where(i => i.Protocol == "https").Where(i => i.Acodec == "none").Last();
+        }
         bool useManifest = false;
         if (videoStream == null)
         {
@@ -280,7 +321,7 @@ public class ExtractedVideoInfo
             if (langs.Count > 1)
             {
                 await MakeAudioScript(audioStreams, langs);
-                audioPath = $"--script=\"{Path.Combine(Dirs.VideoIdFolder(id), "audio.lua")}\"";
+                audioPath = $"--script=\"{Path.Combine(Dirs.VideoIdFolder(id), "mpvAudio.lua")}\"";
             }
             else
             {
@@ -302,6 +343,7 @@ public class ExtractedVideoInfo
             Console.Clear();
             mediaPlayer.Start();
             await mediaPlayer.WaitForExitAsync();
+            Console.Clear();
         }
         catch (Exception ex)
         {
@@ -309,16 +351,31 @@ public class ExtractedVideoInfo
         }
     }
 
+    private async Task Escape(CancellationToken token)
+    {
+        bool leave = false;
+        while (!leave && !token.IsCancellationRequested)
+        {
+            if (!Console.KeyAvailable) continue;
+            if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+            {
+                leave = true;
+                Console.WriteLine("leaving");
+            }
+            await Task.Delay(100);
+        }
+    }
+
     //The audio is loaded with a special script in case of videos with mulitple audio tracks.
     //This ensures that all of the tracks load with the right language tag, and in a good order.
     private async Task MakeAudioScript(List<FormatData> audioStreams, List<string> langs)
     {
-        if (!File.Exists(Path.Combine(Dirs.VideoIdFolder(id), "audio.lua")))
+        if (!File.Exists(Path.Combine(Dirs.VideoIdFolder(id), "mpvAudio.lua")))
         {
             List<string> audioTracks = new();
             List<string> usedLangs = new();
             bool selected = false;
-            string origOrDefault = Settings.systemLanguageAudio ? "default" : "original";
+            string origOrDefault = Globals.settings.systemLanguageAudio ? "default" : "original";
             for (int i = 0; i < audioStreams.Count; i++)
             {
                 if (usedLangs.Contains(audioStreams[i].Language)) continue;
@@ -371,7 +428,7 @@ public class ExtractedVideoInfo
                 audioFile.AppendLine($"	{track}");
             }
             audioFile.AppendLine("end)");
-            await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "audio.lua"), audioFile.ToString());
+            await File.WriteAllTextAsync(Path.Combine(Dirs.VideoIdFolder(id), "mpvAudio.lua"), audioFile.ToString());
         }
     }
 
