@@ -157,22 +157,40 @@ namespace YTCons.Scenes
                     }
                     break;
             }
-            var entryType = 0;
-            switch (videoType)
+            var entryType = -1;
+            if (!videosOnly && !shortsOnly && !streamsOnly)
             {
-                case VideoType.Shorts:
-                    entryType = channelData.Entries.Count - 1;
-                    break;
-                case VideoType.Livestreams:
-                    entryType = 1;
-                    break;
-                case VideoType.Videos:
-                default:
-                    break;
+                foreach (Entry entry in channelData.Entries)
+                {
+                    switch (videoType)
+                    {
+                        case VideoType.Videos:
+                            if (entry.Title.EndsWith("Videos"))
+                            {
+                                entryType = channelData.Entries.IndexOf(entry);
+                            }
+                            break;
+                        case VideoType.Shorts:
+                            if (entry.Title.EndsWith("Shorts"))
+                            {
+                                entryType = channelData.Entries.IndexOf(entry);
+                            }
+                            break;
+                        case VideoType.Livestreams:
+                            if (entry.Title.EndsWith("Live"))
+                            {
+                                entryType = channelData.Entries.IndexOf(entry);
+                            }
+                            break;
+                    }
+                }
             }
-            entryType = Int32.Clamp(entryType, 0, channelData.Entries.Count - 1);
+            if (entryType <= -1)
+            {
+                return menu;
+            }
             var entries = channelData.Entries[entryType].Entries;
-            if (videosOnly || shortsOnly)
+            if (videosOnly || shortsOnly || streamsOnly)
             {
                 entries = channelData.Entries;
             }
