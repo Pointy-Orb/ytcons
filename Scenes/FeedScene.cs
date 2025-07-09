@@ -23,16 +23,32 @@ public class FeedScene : Scene
 
     public FolderMenu root = new FolderMenu("root", null, AnchorType.Center);
 
-    public static async Task<FeedScene> CreateAsync()
+    public static async Task<FeedScene> CreateAsync(bool promptNewFile = false, string? importFeedPath = null)
     {
         var instance = new FeedScene();
         string path = Path.Combine(Dirs.feedsDir, "feeds.opml");
-        if (!File.Exists(path))
+        string? otherPath = importFeedPath;
+        bool gotFeedsFromFile = false;
+        if (!File.Exists(path) && !File.Exists(Path.Combine(Dirs.feedsDir, "feedsPending.json")))
         {
             path = Globals.ReadLine(0, 0, "Enter the path of the opml file you want to import: ");
             while (!File.Exists(path) && !path.EndsWith(".opml"))
             {
                 path = Globals.ReadLine(0, 0, "Enter the path of the opml file you want to import: ");
+            }
+            gotFeedsFromFile = true;
+        }
+        else if (promptNewFile)
+        {
+            otherPath = Globals.ReadLineNull(0, 0, "Enter the path of the opml file you want to import: ");
+            while (!String.IsNullOrEmpty(otherPath) && !File.Exists(otherPath) && !otherPath.EndsWith(".opml"))
+            {
+                otherPath = Globals.ReadLineNull(0, 0, "Enter the path of the opml file you want to import: ");
+                if (String.IsNullOrEmpty(otherPath))
+                {
+                    otherPath = null;
+                    break;
+                }
             }
         }
         if (File.Exists(Path.Combine(Dirs.feedsDir, "feedSettings.json")))
@@ -40,12 +56,14 @@ public class FeedScene : Scene
             var settingsJson = await File.ReadAllTextAsync(Path.Combine(Dirs.feedsDir, "feedSettings.json"));
             instance.feedSettings = JsonConvert.DeserializeObject<FeedSettings>(settingsJson);
         }
-        using (var stream = File.OpenRead(path))
+        List<Task> menuTasks = new();
+        FolderMenu curFolder = instance.root;
+        LoadBar.loadMessage = "Fetching feeds";
+        LoadBar.StartLoad();
+        if (File.Exists(path))
         {
+            using var stream = File.OpenRead(path);
             using var xmlStream = XmlReader.Create(stream);
-            //ConcurrentBag<FeedChannelMenu> rootMenus = new();
-            List<Task> menuTasks = new();
-            FolderMenu curFolder = instance.root;
             while (xmlStream.Read())
             {
                 if (xmlStream.NodeType == XmlNodeType.Element && xmlStream.GetAttribute("text") != null && xmlStream.GetAttribute("xmlUrl") == null)
@@ -62,37 +80,65 @@ public class FeedScene : Scene
                         curFolder = curFolder.parent;
                     }
                 }
-                curFolder.CheckForChannels(xmlStream, menuTasks);
+                curFolder.CheckForChannels(xmlStream, menuTasks, gotFeedsFromFile);
             }
-            if (File.Exists(Path.Combine(Dirs.feedsDir, "feedsPending.json")))
-            {
-                var queueJson = await File.ReadAllTextAsync(Path.Combine(Dirs.feedsDir, "feedsPending.json"));
-                var pendingFeeds = JsonConvert.DeserializeObject<List<(string title, string id)>>(queueJson);
-                if (pendingFeeds == null)
-                {
-                    pendingFeeds = new();
-                }
-                foreach ((string title, string id) feed in pendingFeeds)
-                {
-                    var packet = new FeedChannelMenu.PreMenuPacket
-                    {
-                        title = feed.title,
-                        url = "https://www.youtube.com/feeds/videos.xml?channel_id=" + feed.id
-                    };
-                    menuTasks.Add(MakeFeedMenuAsync(instance.root.menuBag, packet));
-                }
-                File.Delete(Path.Combine(Dirs.feedsDir, "feedsPending.json"));
-            }
-            await Task.WhenAll(menuTasks);
-            instance.root.RecursiveFolderAdding();
-            instance.root.options.Sort((left, right) => string.Compare(left.option, right.option));
-            instance.root.options.Insert(0, new MenuOption("Settings", instance.root, () => Task.Run(() => Globals.activeScene.PushMenu(instance.root.RootSettingsMenu(instance)))));
-            instance.root.options.Insert(0, new MenuOption("Back", instance.root, () => Task.Run(() =>
-                            { LoadBar.visible = false; Globals.scenes.Pop(); })));
-            instance.root.options[instance.root.cursor].selected = true;
-            instance.PushMenu(instance.root);
         }
+        if (File.Exists(otherPath))
+        {
+            using var stream = File.OpenRead(otherPath);
+            using var xmlStream = XmlReader.Create(stream);
+            var importRoot = new FolderMenu(Path.GetFileNameWithoutExtension(otherPath), instance.root);
+            instance.root.subFolders.Add(importRoot);
+            curFolder = importRoot;
+            while (xmlStream.Read())
+            {
+                if (xmlStream.NodeType == XmlNodeType.Element && xmlStream.GetAttribute("text") != null && xmlStream.GetAttribute("xmlUrl") == null)
+                {
+                    var folder = new FolderMenu(xmlStream.GetAttribute("text")!, curFolder);
+                    curFolder.subFolders.Add(folder);
+                    curFolder = folder;
+                    continue;
+                }
+                if (xmlStream.NodeType == XmlNodeType.EndElement && xmlStream.Name == "outline")
+                {
+                    if (curFolder.parent != null)
+                    {
+                        curFolder = curFolder.parent;
+                    }
+                }
+                curFolder.CheckForChannels(xmlStream, menuTasks, true);
+            }
+        }
+        if (File.Exists(Path.Combine(Dirs.feedsDir, "feedsPending.json")))
+        {
+            var queueJson = await File.ReadAllTextAsync(Path.Combine(Dirs.feedsDir, "feedsPending.json"));
+            var pendingFeeds = JsonConvert.DeserializeObject<List<(string title, string id)>>(queueJson);
+            if (pendingFeeds == null)
+            {
+                pendingFeeds = new();
+            }
+            foreach ((string title, string id) feed in pendingFeeds)
+            {
+                var packet = new FeedChannelMenu.PreMenuPacket
+                {
+                    title = feed.title,
+                    url = "https://www.youtube.com/feeds/videos.xml?channel_id=" + feed.id
+                };
+                menuTasks.Add(MakeFeedMenuAsync(instance.root, instance.root.menuBag, packet));
+            }
+            File.Delete(Path.Combine(Dirs.feedsDir, "feedsPending.json"));
+        }
+        await Task.WhenAll(menuTasks);
+        instance.root.RecursiveFolderAdding();
+        instance.root.options.Sort((left, right) => string.Compare(left.option, right.option));
+        instance.root.options.Insert(0, new MenuOption("Settings", instance.root, () => Task.Run(() => Globals.activeScene.PushMenu(instance.root.RootSettingsMenu(instance)))));
+        instance.root.options.Insert(0, new MenuOption("Back", instance.root, () => Task.Run(() =>
+                        { LoadBar.visible = false; Globals.scenes.Pop(); })));
+        instance.root.options[instance.root.cursor].selected = true;
+        instance.PushMenu(instance.root);
         instance.SaveAsXml();
+        LoadBar.visible = false;
+        LoadBar.ClearLoad();
         return instance;
     }
 
@@ -132,9 +178,13 @@ public class FeedScene : Scene
         File.WriteAllText(Path.Combine(Dirs.feedsDir, "feedSettings.json"), settingsJson);
     }
 
-    public static async Task MakeFeedMenuAsync(ConcurrentBag<FeedChannelMenu> bag, FeedChannelMenu.PreMenuPacket packet)
+    public static async Task MakeFeedMenuAsync(FolderMenu rootFolder, ConcurrentBag<FeedChannelMenu> bag, FeedChannelMenu.PreMenuPacket packet, bool checkDuplicates = false)
     {
         var feedMenu = await FeedChannelMenu.CreateAsync(packet);
+        if (checkDuplicates && rootFolder.ContainsMenu(feedMenu))
+        {
+            return;
+        }
         if (feedMenu.options.Count > 0)
         {
             bag.Add(feedMenu);

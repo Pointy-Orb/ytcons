@@ -63,7 +63,7 @@ public class FolderMenu : MenuBlock
         this.parent = parent;
     }
 
-    public void CheckForChannels(XmlReader xmlStream, List<Task> menuTasks)
+    public void CheckForChannels(XmlReader xmlStream, List<Task> menuTasks, bool checkDuplicates = false)
     {
         if (xmlStream.NodeType != XmlNodeType.Element) return;
         if (!xmlStream.HasAttributes) return;
@@ -115,7 +115,7 @@ public class FolderMenu : MenuBlock
                     break;
             }
         }
-        menuTasks.Add(FeedScene.MakeFeedMenuAsync(menuBag, packet));
+        menuTasks.Add(FeedScene.MakeFeedMenuAsync(root, menuBag, packet, checkDuplicates));
     }
 
     public FolderMenu root
@@ -182,7 +182,9 @@ public class FolderMenu : MenuBlock
             subFolder.options.Sort((left, right) => string.Compare(left.option, right.option));
             subFolder.options[subFolder.cursor].selected = true;
 
-            var option = new FolderOption("[folder]/" + subFolder.title, this, subFolder, () => Task.Run(() => Globals.activeScene.PushMenu(subFolder)), () => Task.Run(() => Globals.activeScene.PushMenu(new FolderMenuAlt(subFolder))));
+            var option = new FolderOption("[folder]/" + subFolder.title, this, subFolder, () => Task.Run(() => Globals.activeScene.PushMenu(subFolder)), () => Task.Run(() => { }));
+            var subFolderAlt = new FolderMenuAlt(subFolder, option);
+            option.ChangeAltOnSelected(() => Task.Run(() => Globals.activeScene.PushMenu(subFolderAlt)));
             subFolder.parentOption = option;
             option.tip = "Press Enter for folder options";
             option.useCounter = true;
@@ -468,6 +470,20 @@ public class FolderMenu : MenuBlock
         MoveToOtherFolder(newFolder.newFolder, parentOption, depth);
     }
 
+    public bool ContainsMenu(FeedChannelMenu item)
+    {
+        bool contains = false;
+        foreach (FolderMenu subFolder in subFolders)
+        {
+            contains = subFolder.ContainsMenu(item);
+            if (contains)
+            {
+                return contains;
+            }
+        }
+        return menuBag.ToList().Find(i => i.id == item.id && i.shortsStatus == item.shortsStatus) != null;
+    }
+
     public static (FolderMenu newFolder, bool aborted) NewFolder(FolderMenu parentFolder)
     {
         var selDrawPos = Globals.activeScene.PeekMenu().selectedDrawPos;
@@ -479,7 +495,9 @@ public class FolderMenu : MenuBlock
         }
         var newFolder = new FolderMenu(folderName, parentFolder);
         parentFolder.subFolders.Add(newFolder);
-        var option = new FolderMenu.FolderOption("[folder]/" + newFolder.title, parentFolder, newFolder, () => Task.Run(() => Globals.activeScene.PushMenu(newFolder)), () => Task.Run(() => Globals.activeScene.PushMenu(new FolderMenuAlt(newFolder))));
+        var option = new FolderMenu.FolderOption("[folder]/" + newFolder.title, parentFolder, newFolder, () => Task.Run(() => Globals.activeScene.PushMenu(newFolder)), () => Task.Run(() => { }));
+        var newFolderAlt = new FolderMenuAlt(newFolder, option);
+        option.ChangeAltOnSelected(() => Task.Run(() => Globals.activeScene.PushMenu(newFolderAlt)));
         option.useCounter = true;
         parentFolder.options.Add(option);
         return (newFolder, false);
@@ -526,12 +544,31 @@ public class FolderMenu : MenuBlock
         root.SaveAsXml();
     }
 
+    private async Task ImportFeed(MenuBlock parentMenu)
+    {
+        parentMenu.resetNextTick = true;
+        var selDrawPos = parentMenu.selectedDrawPos;
+        string? otherPath = Globals.ReadLineNull(selDrawPos.x, selDrawPos.y, " >  Enter the path of the opml file you want to import: ");
+        while (!String.IsNullOrEmpty(otherPath) && !File.Exists(otherPath) && !otherPath.EndsWith(".opml"))
+        {
+            otherPath = Globals.ReadLineNull(selDrawPos.x, selDrawPos.y, " >  Enter the path of the opml file you want to import: ");
+        }
+        if (String.IsNullOrEmpty(otherPath))
+        {
+            otherPath = null;
+            return;
+        }
+        await ReFetchFeeds(otherPath);
+    }
+
     public MenuBlock RootSettingsMenu(FeedScene scene)
     {
         var menu = new MenuBlock(AnchorType.Cursor);
         menu.options.Add(new MenuOption("Mark All as Read", this, () => Task.Run(() => MarkAllAsRead())));
 
         menu.options.Add(new MenuOption("Fetch All Feeds", this, () => ReFetchFeeds()));
+
+        menu.options.Add(new MenuOption("Import feed from OPML", menu, () => ImportFeed(menu)));
 
         var setArchiveOption = new MenuOption($"Switch Default Archive Mode (current: {FeedChannelMenu.PrettifyArchiveModeStatic(scene.feedSettings.defaultArchive, true, scene.feedSettings.maxArticleNumber, scene.feedSettings.maxArticleAge)})", this, () => Task.Run(() => { }));
         var archiveModeMenu = SetArchiveModeMenu(scene, setArchiveOption);
@@ -541,13 +578,10 @@ public class FolderMenu : MenuBlock
         return menu;
     }
 
-    private async Task ReFetchFeeds()
+    private async Task ReFetchFeeds(string? otherPath = null)
     {
         SaveAsXml();
-        LoadBar.loadMessage = "Fetching feeds";
-        LoadBar.StartLoad();
-        var newFeedScene = await FeedScene.CreateAsync();
-        LoadBar.visible = false;
+        var newFeedScene = await FeedScene.CreateAsync(importFeedPath: otherPath);
         Globals.scenes.Pop();
         Globals.scenes.Push(newFeedScene);
     }
@@ -583,16 +617,36 @@ public class FolderMenu : MenuBlock
         menu.options[menu.cursor].selected = true;
         return menu;
     }
+
+    public bool CheckRemoval()
+    {
+        if (options.Count <= 1 && parent != null)
+        {
+            Remove();
+            parent.CheckRemoval();
+            return true;
+        }
+        return false;
+    }
 }
 
 public class FolderMenuAlt : MenuBlock
 {
-    public FolderMenuAlt(FolderMenu original, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
+    public FolderMenuAlt(FolderMenu original, MenuOption parentOption, AnchorType anchorType = AnchorType.Cursor) : base(anchorType)
     {
         options.Add(new MenuOption("Rename", this, () => Task.Run(() => original.Rename(this))));
         options.Add(new MenuOption("Mark All as Read", this, () => Task.Run(() => original.MarkAllAsRead())));
         options.Add(new MenuOption("Move Folder", this, () => Task.Run(() => original.MoveFolder())));
-        options.Add(new MenuOption("Remove Folder", this, ConfirmAction(() => Task.Run(() => original.Remove()))));
+        options.Add(new MenuOption("Remove Folder", this, ConfirmAction(() => Task.Run(() =>
+        {
+            Globals.activeScene.PopMenu();
+            original.Remove();
+            if (parentOption.parent is FolderMenu parentFolder && !parentFolder.CheckRemoval())
+            {
+                parentOption.parent.cursor = Int32.Clamp(parentOption.parent.cursor, 0, parentOption.parent.options.Count - 1);
+                parentOption.parent.options[parentOption.parent.cursor].selected = true;
+            }
+        }))));
         options.Add(new MenuOption("Move Contents and Remove", this, () => Task.Run(() => original.MoveContents())));
     }
 }

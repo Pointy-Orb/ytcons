@@ -86,8 +86,20 @@ public class ExtractedVideoInfo
                 if (line.Contains("This live event"))
                 {
                     success = false;
-                    var logString = line.Replace($"ERROR: [youtube] {id}: ", "");
-                    LoadBar.WriteLog(logString);
+                    using var errorClient = new HttpClient();
+                    string html = await errorClient.GetStringAsync("https://youtube.com/watch?v=" + id);
+                    var match = Regex.Match(html, "startTimestamp\":\"([^\"]+)");
+                    if (match.Success)
+                    {
+                        string start = match.Groups[1].Value;
+                        var startTime = DateTimeOffset.Parse(start).LocalDateTime;
+                        var dayOf = " today";
+                        if (startTime.Date != DateTime.Now.Date)
+                        {
+                            dayOf = $" at {startTime.Date.ToShortDateString()}";
+                        }
+                        LoadBar.WriteLog("Live broadcast starts at " + startTime.ToShortTimeString() + dayOf);
+                    }
                     return;
                 }
             }

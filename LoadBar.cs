@@ -50,7 +50,12 @@ public static class LoadBar
         get
         {
             var preEmpty = "";
-            for (int i = 0; i < frames[0].Length + prevLoadMessage.Length; i++)
+            var longerPrev = prevLoadMessage.Length;
+            if (prevLog.Length > longerPrev)
+            {
+                longerPrev = prevLog.Length;
+            }
+            for (int i = 0; i < frames[0].Length + longerPrev; i++)
             {
                 preEmpty += " ";
             }
@@ -92,7 +97,7 @@ public static class LoadBar
         visible = true;
         while (visible)
         {
-            if (prevLoadMessage.Length > loadMessage.Length) ClearLoad();
+            if (prevLoadMessage.Length != loadMessage.Length) ClearLoad();
             prevLoadMessage = loadMessage;
 
             Console.ForegroundColor = Globals.defaultForeground;
@@ -118,6 +123,7 @@ public static class LoadBar
         logTime--;
         ClearLoad();
         Console.SetCursorPosition(0, Console.WindowHeight);
+        Console.ForegroundColor = Globals.defaultForeground;
         Console.Write(log);
         if (logTime == 0)
         {
@@ -127,8 +133,10 @@ public static class LoadBar
                 Console.Write(" ");
             }
         }
+        prevLog = log;
     }
 
+    static string prevLog = "";
     public static void WriteLog(string log)
     {
         LoadBar.log = log;
@@ -136,6 +144,7 @@ public static class LoadBar
         logTime = log.Length * 3;
         if (logTime < 40) logTime = 40;
         Console.SetCursorPosition(0, Console.WindowHeight);
+        Console.ForegroundColor = Globals.defaultForeground;
         Console.Write(log);
     }
 

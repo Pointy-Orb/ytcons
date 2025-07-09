@@ -12,7 +12,7 @@ public class RootScene : Scene
     {
         logo = GetLogo();
         var menu = new MenuBlock(AnchorType.Bottom);
-        menu.options.Add(new MenuOption("Feeds", menu, () => OpenFeeds()));
+        menu.options.Add(new MenuOption("Feeds", menu, () => OpenFeeds(), () => OpenFeeds(true)));
         menu.options.Add(new MenuOption("Search", menu, () => Search()));
         menu.options.Add(new MenuOption("Playlists", menu, () => Task.Run(PlaylistSceneIfPlaylistsExist)));
         menu.options.Add(new MenuOption("Exit", menu, () => Task.Run(() => Globals.Exit(0))));
@@ -33,10 +33,15 @@ public class RootScene : Scene
         }
     }
 
-    private async Task OpenFeeds()
+    private async Task OpenFeeds(bool promptNewFile = false)
     {
-        var feedScene = await FeedScene.CreateAsync();
         childSceneOpen = true;
+        if (!File.Exists(Path.Combine(Dirs.feedsDir, "feeds.opml")) && !File.Exists(Path.Combine(Dirs.feedsDir, "feedsPending.json")) && !promptNewFile)
+        {
+            LoadBar.WriteLog("You have not added any channels to your feed yet. Press Enter to import an existing opml file");
+            return;
+        }
+        var feedScene = await FeedScene.CreateAsync(promptNewFile);
         Globals.scenes.Push(feedScene);
     }
 
