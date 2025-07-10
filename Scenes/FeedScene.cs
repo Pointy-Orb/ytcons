@@ -124,7 +124,7 @@ public class FeedScene : Scene
                     title = feed.title,
                     url = "https://www.youtube.com/feeds/videos.xml?channel_id=" + feed.id
                 };
-                menuTasks.Add(MakeFeedMenuAsync(instance.root, instance.root.menuBag, packet));
+                menuTasks.Add(MakeFeedMenuAsync(instance.root, instance.root.menuBag, packet, true));
             }
             File.Delete(Path.Combine(Dirs.feedsDir, "feedsPending.json"));
         }

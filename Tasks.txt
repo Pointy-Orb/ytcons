@@ -1,19 +1,18 @@
 TODO:
 Iron out kinks with paged description
 Allow viewing of comments section (its sorted by newest first by default (aka brainrot), make sure to fix that)
-Fix the thumbnail display (fix the inconsistencies)
-Give the ability to search a specific channel
-Add "Add channel from ID/handle/name/whatever" option to global feed settings
-Have "all feeds" option update dynamically
-Add config option for default media player
-Add config option for default resolution and format for playback
-Fix drawing issues when having description window open on channel page
 
 DOING:
-Integrate RSS feed
-Add settings
 
 DONE:
+Add "Add channel from ID/handle/name/whatever" option to global feed settings
+Give the ability to search a specific channel
+Fix the thumbnail display (fix the inconsistencies)
+Fix drawing issues when having description window open on channel page
+Have "all feeds" option update dynamically
+Add config option for default resolution and format for playback
+Add settings
+Integrate RSS feed
 Allow the ability to open the program with a URL as an argument and have that video load up
 Add feed settings
 Fix youtu.be links
@@ -26,3 +25,4 @@ Add ability to separate shorts from normal videos in feed
 
 HOLD:
 Find a way to get drawing support for Japanese characters to work
+Add config option for default media player

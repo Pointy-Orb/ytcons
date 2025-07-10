@@ -187,6 +187,7 @@ public class MenuBlock
         {
             return;
         }
+        Globals.activeScene.PostDrawOptions();
         PostDraw();
         foreach (MenuOption option in options)
         {

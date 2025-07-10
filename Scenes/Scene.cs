@@ -37,6 +37,10 @@ public class Scene
         OnUpdate();
     }
 
+    public virtual void PostDrawOptions()
+    {
+    }
+
     protected virtual void OnUpdate()
     {
     }

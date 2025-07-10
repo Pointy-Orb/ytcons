@@ -244,7 +244,7 @@ public class VideoData
     public int? ChannelFollowerCount { get; set; }
 
     [JsonProperty("channel_is_verified")]
-    public bool? ChannelIsVerified { get; set; }
+    public bool? ChannelIsVerified { get; set; } = false;
 
     [JsonProperty("uploader")]
     public string Uploader { get; set; }

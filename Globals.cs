@@ -1,4 +1,5 @@
 using YTCons.Scenes;
+using Newtonsoft.Json;
 
 namespace YTCons;
 
@@ -92,6 +93,12 @@ public static class Globals
                 LoadBar.WriteLog("Invalid url in argument.");
             }
         }
+        if (File.Exists(Path.Combine(Dirs.configDir, "settings.json")))
+        {
+            var settingsJson = await File.ReadAllTextAsync(Path.Combine(Dirs.configDir, "settings.json"));
+            settings = JsonConvert.DeserializeObject<Settings>(settingsJson);
+        }
+
         scene.RootMenu.options[scene.RootMenu.cursor].selected = true;
     }
 

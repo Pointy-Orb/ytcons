@@ -94,9 +94,6 @@ public class Entry
 
     [JsonProperty("live_status")]
     public object LiveStatus { get; set; }
-
-    [JsonProperty("channel_is_verified")]
-    public bool ChannelIsVerified { get; set; }
 }
 
 public class ChannelData

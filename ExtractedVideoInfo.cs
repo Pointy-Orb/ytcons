@@ -218,7 +218,8 @@ public class ExtractedVideoInfo
                 language = "en";
             }
         }
-        var subFolder = Globals.settings.permasaveSubtitles ? Path.Combine(Dirs.localDir, id) : Dirs.VideoIdFolder(id);
+        var subFolder = Globals.settings.permasaveSubtitles ? Path.Combine(Dirs.configDir, id) : Dirs.VideoIdFolder(id);
+        Directory.CreateDirectory(subFolder);
         var subPath = Path.Combine(subFolder, language + $"-auto.{language}.srt");
         if (File.Exists(subPath))
         {
@@ -286,28 +287,30 @@ public class ExtractedVideoInfo
         {
             rResolution = Globals.settings.chosenResolution;
         }
-        await PlayMpv(rFormat, rResolution);
-    }
-
-    private async Task PlayMpv(string format = "mp4", string resolution = "720p")
-    {
-        mediaPlayer = new();
-        mediaPlayer.StartInfo.FileName = Dirs.GetPathApp("mpv");
-        FormatData? videoStream = video.Formats.Where(i => i.FormatNote == resolution).Where(i => i.Acodec == "none").ToList().Find(i => i.Ext == format);
-        if (resolution == "Highest")
+        FormatData? videoStream = video.Formats.Where(i => i.FormatNote == rResolution).Where(i => i.Acodec == "none").ToList().Find(i => i.Ext == format);
+        if (rResolution == "Highest")
         {
-            videoStream = video.Formats.Where(i => i.Protocol == "https").Where(i => i.Acodec == "none").Last();
+            videoStream = video.Formats.Where(i => i.Protocol == "https").Where(i => i.AudioChannels == null).Reverse().ToList().Find(i => i.Vcodec != "none");
         }
         bool useManifest = false;
         if (videoStream == null)
         {
-            videoStream = video.Formats.Where(i => i.Protocol == "https").Where(i => i.AudioChannels == null).ToList().Find(i => i.Vcodec != "none");
+            //Reverse so it defaults to highest resolution instead of lowest
+            videoStream = video.Formats.Where(i => i.Protocol == "https").Where(i => i.AudioChannels == null).Reverse().ToList().Find(i => i.Vcodec != "none");
             if (videoStream == null)
             {
-                videoStream = video.Formats.Find(i => i.Resolution.Contains(Regex.Replace(resolution, @"(\d+).*", "$1")));
+                videoStream = video.Formats.Find(i => i.Resolution.Contains(Regex.Replace(rResolution, @"(\d+).*", "$1")));
                 useManifest = true;
             }
         }
+        List<FormatData> audioStreams = video.Formats.Where(i => i.AudioChannels != null).Where(i => i.Vcodec == "none").ToList();
+        await PlayInner(videoStream, audioStreams, useManifest);
+    }
+
+    private async Task PlayInner(FormatData? videoStream, List<FormatData> audioStreams, bool useManifest)
+    {
+        mediaPlayer = new();
+        mediaPlayer.StartInfo.FileName = Dirs.GetPathApp("mpv");
         string subsAsArg = "";
         string delimiter = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ";" : ":";
         for (int i = 0; i < subtitles.Count(); i++)
@@ -318,7 +321,6 @@ public class ExtractedVideoInfo
                 subsAsArg += delimiter;
             }
         }
-        List<FormatData> audioStreams = video.Formats.Where(i => i.AudioChannels != null).Where(i => i.Vcodec == "none").ToList();
         List<string> langs = new();
         foreach (FormatData audioStream in audioStreams)
         {
@@ -382,7 +384,19 @@ public class ExtractedVideoInfo
     //This ensures that all of the tracks load with the right language tag, and in a good order.
     private async Task MakeAudioScript(List<FormatData> audioStreams, List<string> langs)
     {
-        if (!File.Exists(Path.Combine(Dirs.VideoIdFolder(id), "mpvAudio.lua")))
+        bool makeTheScript = !File.Exists(Path.Combine(Dirs.VideoIdFolder(id), "mpvAudio.lua"));
+        if (File.Exists(Path.Combine(Dirs.VideoIdFolder(id), "mpvAudio.lua")))
+        {
+            //Rewrite the file if the settings have been changed since last use
+            using var fileStream = File.Open(Path.Combine(Dirs.VideoIdFolder(id), "mpvAudio.lua"), FileMode.Open);
+            using var reader = new StreamReader(fileStream);
+            var firstLine = reader.ReadLine();
+            if (firstLine != null && !firstLine.Contains("--defaultFirst: " + Globals.settings.systemLanguageAudio))
+            {
+                makeTheScript = true;
+            }
+        }
+        if (makeTheScript)
         {
             List<string> audioTracks = new();
             List<string> usedLangs = new();
@@ -433,8 +447,10 @@ public class ExtractedVideoInfo
 
                 return string.Compare(left, right);
             });
-            StringBuilder audioFile = new("mp.register_event(\"file-loaded\", function()");
+            //Leave a tag of what the default config was when this script was made so that it can be overwritten if it changes
+            StringBuilder audioFile = new($"--defaultFirst: " + Globals.settings.systemLanguageAudio);
             audioFile.AppendLine();
+            audioFile.AppendLine("mp.register_event(\"file-loaded\", function()");
             foreach (string track in audioTracks)
             {
                 audioFile.AppendLine($"	{track}");

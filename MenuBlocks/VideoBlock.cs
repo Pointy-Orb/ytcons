@@ -43,7 +43,6 @@ public class VideoBlock : MenuBlock
             instance.sourceDesc = "(no description)".ToCharArray();
         }
         instance.ChangeWindowSize();
-        instance.gettingThumbnail = instance.ShowThumbnailInner();
         return instance;
     }
 
@@ -59,7 +58,6 @@ public class VideoBlock : MenuBlock
         thumbnailPath = Path.GetTempPath() + videoID + ".webp";
         extraData = MakeExtraData();
         sourceDesc = FinishConstructor();
-        gettingThumbnail = ShowThumbnailInner();
         ChangeWindowSize();
     }
 
@@ -70,7 +68,7 @@ public class VideoBlock : MenuBlock
         extraDataBuilder.Append("  │  👍 Likes: " + videoInfo.video.LikeCount.ToString());
         //It's not included in the metadata so there's no way to know :'(
         //extraDataBuilder.Append(" 👎 DisikeCount: " + videoInfo.video.DislikeCount.ToString());
-        extraDataBuilder.Append("  │📺 Channel: " + videoInfo.video.Uploader + (videoInfo.video.ChannelIsVerified != null && (bool)videoInfo.video.ChannelIsVerified ? "" : " ✔"));
+        extraDataBuilder.Append("  │📺 Channel: " + videoInfo.video.Uploader + (videoInfo.video.ChannelIsVerified != null && (bool)videoInfo.video.ChannelIsVerified ? " ✔" : ""));
         extraDataBuilder.Append($" (目 Subs: {videoInfo.video.ChannelFollowerCount.ToString()})");
         extraDataBuilder.Append($"  │ 𐁗  Uploaded on {videoInfo.uploadDate.ToShortDateString()}");
         extraDataBuilder.Append("  │ 🕓 Duration: " + videoInfo.video.DurationString);
@@ -95,17 +93,11 @@ public class VideoBlock : MenuBlock
             activeBecause = InactiveReason.ShowingDeets;
             videoInfo.windowOpen = true;
         })));
-        options.Add(new MenuOption("Show Thumbnail", this, () => Task.Run(() =>
+        options.Add(new MenuOption("Show Thumbnail", this, () => Task.Run(async () =>
         {
             active = false;
             activeBecause = InactiveReason.ShowingThumbnail;
-            var showThumbail = ShowThumbnail();
-            while (!showThumbail.IsCompleted)
-            {
-                LoadBar.loadMessage = "Getting thumbnail";
-                LoadBar.WriteLoad();
-            }
-            LoadBar.ClearLoad();
+            await ShowThumbnail();
         }), () => Task.Run(() =>
         {
             var confirmDownload = new MenuBlock(AnchorType.Cursor);
@@ -144,9 +136,12 @@ public class VideoBlock : MenuBlock
 
     private async Task DownloadThumbnail()
     {
-        if (!gettingThumbnail.IsCompleted)
+        if (!File.Exists(thumbnailPath))
         {
-            await gettingThumbnail;
+            using var client = new HttpClient();
+            var thumbnailUrl = new Uri(videoInfo.video.Thumbnails.Last().Url);
+            byte[] thumbnailBytes = await client.GetByteArrayAsync(thumbnailUrl);
+            await File.WriteAllBytesAsync(thumbnailPath, thumbnailBytes);
         }
         var webp = await File.ReadAllBytesAsync(thumbnailPath);
         using var image = new MagickImage(webp);
@@ -170,9 +165,21 @@ public class VideoBlock : MenuBlock
     bool gotThumbnail = false;
     private async Task ShowThumbnail()
     {
-        if (!gettingThumbnail.IsCompleted)
+        if (!File.Exists(thumbnailPath))
         {
-            await gettingThumbnail;
+            using var client = new HttpClient();
+            var thumbnailUrl = new Uri(videoInfo.video.Thumbnails.Last().Url);
+            try
+            {
+                byte[] thumbnailBytes = await client.GetByteArrayAsync(thumbnailUrl);
+                await File.WriteAllBytesAsync(thumbnailPath, thumbnailBytes);
+            }
+            catch
+            {
+                thumbnailUrl = new Uri(videoInfo.video.Thumbnails[0].Url);
+                byte[] thumbnailBytes = await client.GetByteArrayAsync(thumbnailUrl);
+                await File.WriteAllBytesAsync(thumbnailPath, thumbnailBytes);
+            }
         }
         try
         {
@@ -196,8 +203,6 @@ public class VideoBlock : MenuBlock
                     Arguments = thumbnailPath
                 };
             }
-            imageViewer.StartInfo.RedirectStandardInput = true;
-            imageViewer.StartInfo.RedirectStandardError = true;
             Console.Clear();
             imageViewer.Start();
             var key = Console.ReadKey();

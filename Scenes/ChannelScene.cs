@@ -1,4 +1,5 @@
 using YTCons.MenuBlocks;
+using System.Text.RegularExpressions;
 using System.Diagnostics;
 using Newtonsoft.Json;
 
@@ -48,20 +49,6 @@ namespace YTCons.Scenes
                     menu.options.Add(new MenuOption(value.ToString(), menu, () => Task.Run(() => instance.PushMenu(videoTypeMenu))));
                 }
             }
-            /*
-            var videosMenu = instance.VideosMenu();
-            if (videosMenu.options.Count > 0)
-            {
-                menu.options.Add(new MenuOption("Videos", menu, () => Task.Run(() => instance.PushMenu(videosMenu))));
-            }
-
-            var shortsMenu = instance.VideosMenu(shorts: true);
-            if (shortsMenu.options.Count > 0)
-            {
-                menu.options.Add(new MenuOption("Shorts", menu, () => Task.Run(() => instance.PushMenu(shortsMenu))));
-            }
-			*/
-            //TODO: Add the ability to search a specific channel
             bool addTheFeedOption = true;
             if (File.Exists(Path.Combine(Dirs.feedsDir, "feedsPending.json")))
             {
@@ -79,6 +66,7 @@ namespace YTCons.Scenes
                     addTheFeedOption = false;
                 }
             }
+            menu.options.Add(new MenuOption("Search", menu, () => Task.Run(() => instance.SearchChannel(menu))));
             if (addTheFeedOption)
             {
                 var feedOption = new MenuOption("Add to Feeds", menu, () => Task.Run(() => { }));
@@ -87,6 +75,61 @@ namespace YTCons.Scenes
             }
             instance.PushMenu(menu);
             return instance;
+        }
+
+        private void SearchChannel(MenuBlock menu)
+        {
+            var selDrawPos = menu.selectedDrawPos;
+            menu.resetNextTick = true;
+            var query = Globals.ReadLineNull(selDrawPos.x, selDrawPos.y, " >  Enter your search query (leave blank to cancel): ");
+            if (query == null || query == "")
+            {
+                return;
+            }
+            var videos = VideosMenu(rawList: true);
+            videos.options.AddRange(VideosMenu(VideoType.Shorts, true).options);
+            videos.options.AddRange(VideosMenu(VideoType.Livestreams, true).options);
+            if (videos.options == null || videos.options.Count <= 0)
+            {
+                return;
+            }
+            string[] keywords = query.Split(' ');
+            videos.options.Sort((left, right) =>
+            {
+                int lPoints = 0;
+                int rPoints = 0;
+                for (int i = 0; i < keywords.Length; i++)
+                {
+                    int prev = Int32.Clamp(i - 1, 0, keywords.Length - 1);
+                    if (Regex.Match(left.option, keywords[i], RegexOptions.IgnoreCase).Success)
+                        lPoints += 3;
+                    if (Regex.Match(right.option, keywords[i], RegexOptions.IgnoreCase).Success)
+                        rPoints += 3;
+                    if (left.option.Contains(keywords[i]))
+                    {
+                        lPoints++;
+                    }
+                    if (right.option.Contains(keywords[i]))
+                    {
+                        rPoints++;
+                    }
+                }
+                if (left is MenuOptionWithEntry lOption && right is MenuOptionWithEntry rOption && lOption.entry.Description != null && rOption.entry.Description != null)
+                {
+                    for (int i = 0; i < keywords.Length; i++)
+                    {
+                        int prev = Int32.Clamp(i - 1, 0, keywords.Length - 1);
+                        if (Regex.Match(lOption.entry.Description, keywords[i], RegexOptions.IgnoreCase).Success)
+                            lPoints += 1;
+                        if (Regex.Match(rOption.entry.Description, keywords[i], RegexOptions.IgnoreCase).Success)
+                            rPoints += 1;
+                    }
+                }
+                if (lPoints > rPoints) return -1;
+                if (lPoints < rPoints) return 1;
+                return 0;
+            });
+            PushMenu(videos);
         }
 
         private void AddToFeed(MenuOption parentOption)
@@ -129,13 +172,14 @@ namespace YTCons.Scenes
             Livestreams
         }
 
-        private MenuBlock VideosMenu(VideoType videoType = VideoType.Videos)
+        private MenuBlock VideosMenu(VideoType videoType = VideoType.Videos, bool rawList = false)
         {
             bool hasLive = channelData.Entries.Count > 2;
             bool videosOnly = channelData.Channel != channelData.Title && channelData.Title.EndsWith("Videos");
             bool shortsOnly = channelData.Channel != channelData.Title && channelData.Title.EndsWith("Shorts");
             bool streamsOnly = channelData.Channel != channelData.Title && channelData.Title.EndsWith("Live");
             var menu = new MenuBlock(AnchorType.Cursor);
+            menu.grayUnselected = true;
             switch (videoType)
             {
                 case VideoType.Videos:
@@ -185,6 +229,10 @@ namespace YTCons.Scenes
                     }
                 }
             }
+            else
+            {
+                entryType = 0;
+            }
             if (entryType <= -1)
             {
                 return menu;
@@ -207,6 +255,11 @@ namespace YTCons.Scenes
                     LoadBar.ClearLoad();
                     PushMenu(videoMenu);
                 })));
+            }
+            if (rawList)
+            {
+                menu.options.AddRange(videos);
+                return menu;
             }
             var byLatest = new MenuBlock(AnchorType.Cursor);
             byLatest.grayUnselected = true;
@@ -246,7 +299,7 @@ namespace YTCons.Scenes
             }
         }
 
-        protected override void PostDraw()
+        public override void PostDrawOptions()
         {
             int nameChar = 0;
             char[] channelName = channelData.Channel.Insert(0, "Channel: ").ToCharArray();
@@ -262,6 +315,7 @@ namespace YTCons.Scenes
                     for (int i = 0; i < Console.WindowWidth; i++)
                     {
                         Globals.Write(i, j, '─');
+                        Globals.SetForegroundColor(i, j, Globals.defaultForeground);
                         continue;
                     }
                     RootMenu.drawOffset = j + 5;
@@ -275,6 +329,7 @@ namespace YTCons.Scenes
                         if (nameChar < channelName.Length)
                         {
                             Globals.Write(i, j, channelName[nameChar]);
+                            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
                             nameChar++;
                         }
                         else
@@ -287,6 +342,7 @@ namespace YTCons.Scenes
                         if (subChar < subCount.Length)
                         {
                             Globals.Write(i, j, subCount[subChar]);
+                            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
                             subChar++;
                             continue;
                         }
@@ -335,6 +391,7 @@ namespace YTCons.Scenes
                                 }
                             }
                             Globals.Write(i, j, desc[descChar]);
+                            Globals.SetForegroundColor(i, j, Globals.defaultForeground);
                             descChar++;
                             continue;
                         }

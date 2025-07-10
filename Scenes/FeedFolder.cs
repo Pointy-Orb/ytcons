@@ -1,4 +1,6 @@
 using YTCons.MenuBlocks;
+using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Collections.Concurrent;
 
@@ -142,11 +144,9 @@ public class FolderMenu : MenuBlock
         }
     }
 
-    public void RecursiveFolderAdding(List<MenuBlock>? parentAllFeeds = null)
+    public void RecursiveFolderAdding()
     {
         BagToList();
-        //TODO: Have this update dynamically as folders are moved around
-        MenuBlock allFeeds = new(AnchorType.Cursor);
         foreach (FeedChannelMenu menu in menus)
         {
             var option = new MenuOption(menu.title, this,
@@ -159,23 +159,10 @@ public class FolderMenu : MenuBlock
             menu.optionParent = option;
             menu.CheckUnreadOptions();
             options.Add(option);
-            foreach (MenuOption feedOption in menu.options)
-            {
-                allFeeds.options.Add(feedOption);
-                if (parentAllFeeds != null)
-                {
-                    foreach (MenuBlock parentAllFeed in parentAllFeeds)
-                    {
-                        parentAllFeed.options.Add(feedOption);
-                    }
-                }
-            }
         }
-        var rAllFeeds = parentAllFeeds == null ? new List<MenuBlock>() : parentAllFeeds;
-        rAllFeeds.Add(allFeeds);
         foreach (FolderMenu subFolder in subFolders)
         {
-            subFolder.RecursiveFolderAdding(rAllFeeds);
+            subFolder.RecursiveFolderAdding();
             if (subFolder.options.Count() <= 0) continue;
 
             if (subFolder.options.Count() > 7) subFolder.grayUnselected = true;
@@ -190,17 +177,36 @@ public class FolderMenu : MenuBlock
             option.useCounter = true;
             options.Add(option);
         }
-        if (allFeeds.options.Count() <= 0) return;
-        allFeeds.options.Sort((left, right) =>
+        options.Add(new MenuOption("[All Feeds]", this, () => Task.Run(() => Globals.activeScene.PushMenu(AllFeeds()))));
+    }
+
+    private MenuBlock AllFeeds()
+    {
+        var menu = new MenuBlock(AnchorType.Cursor);
+        menu.options = RecursiveOptionList();
+        menu.options.Sort((left, right) =>
         {
             var l = (FeedVideoOption)left;
             var r = (FeedVideoOption)right;
 
             return r.feedData.published.CompareTo(l.feedData.published);
         });
-        allFeeds.grayUnselected = true;
-        if (allFeeds.options.Count <= 0) return;
-        options.Add(new MenuOption("[All Feeds]", this, () => Task.Run(() => Globals.activeScene.PushMenu(allFeeds))));
+        return menu;
+    }
+
+    private List<MenuOption> RecursiveOptionList()
+    {
+        var list = new List<MenuOption>();
+        foreach (FolderMenu subFolder in subFolders)
+        {
+            var childList = subFolder.RecursiveOptionList();
+            list.AddRange(childList);
+        }
+        foreach (FeedChannelMenu feed in menus)
+        {
+            list.AddRange(feed.options);
+        }
+        return list;
     }
 
     public void SaveAsXml()
@@ -570,12 +576,47 @@ public class FolderMenu : MenuBlock
 
         menu.options.Add(new MenuOption("Import feed from OPML", menu, () => ImportFeed(menu)));
 
+        menu.options.Add(new MenuOption("Add channel from handle", menu, () => AddChannelFromHandle(menu)));
+
         var setArchiveOption = new MenuOption($"Switch Default Archive Mode (current: {FeedChannelMenu.PrettifyArchiveModeStatic(scene.feedSettings.defaultArchive, true, scene.feedSettings.maxArticleNumber, scene.feedSettings.maxArticleAge)})", this, () => Task.Run(() => { }));
         var archiveModeMenu = SetArchiveModeMenu(scene, setArchiveOption);
         setArchiveOption.ChangeOnSelected(() => Task.Run(() => Globals.activeScene.PushMenu(archiveModeMenu)));
         menu.options.Add(setArchiveOption);
 
         return menu;
+    }
+
+    private async Task AddChannelFromHandle(MenuBlock display)
+    {
+        display.resetNextTick = true;
+        var selDrawPos = display.selectedDrawPos;
+        var handle = Globals.ReadLineNull(selDrawPos.x, selDrawPos.y, " > Enter the handle of the channel you want to import: @");
+        if (handle == null)
+        {
+            return;
+        }
+        using (var client = new HttpClient())
+        {
+            using var response = await client.GetAsync("https://youtube.com/@" + handle);
+            if (!response.IsSuccessStatusCode)
+            {
+                LoadBar.WriteLog("Invalid handle");
+                return;
+            }
+            var dataString = await client.GetStringAsync("https://youtube.com/@" + handle);
+            var channelTitle = Regex.Match(dataString, @"\<meta itemprop=""name"" content=""(.*?)""\>").Groups[1].Value;
+            var channelId = Regex.Match(dataString, "channel_id=([^\"]+)").Groups[1].Value;
+            List<(string title, string id)> feedQueue = new();
+            if (File.Exists(Path.Combine(Dirs.feedsDir, "feedsPending.json")))
+            {
+                string queueJson = File.ReadAllText(Path.Combine(Dirs.feedsDir, "feedsPending.json"));
+                feedQueue = JsonConvert.DeserializeObject<List<(string title, string id)>>(queueJson);
+            }
+            feedQueue.Add((channelTitle, channelId));
+            string queueOutJson = JsonConvert.SerializeObject(feedQueue);
+            File.WriteAllText(Path.Combine(Dirs.feedsDir, "feedsPending.json"), queueOutJson);
+        }
+        await ReFetchFeeds();
     }
 
     private async Task ReFetchFeeds(string? otherPath = null)

@@ -15,9 +15,16 @@ public class RootScene : Scene
         menu.options.Add(new MenuOption("Feeds", menu, () => OpenFeeds(), () => OpenFeeds(true)));
         menu.options.Add(new MenuOption("Search", menu, () => Search()));
         menu.options.Add(new MenuOption("Playlists", menu, () => Task.Run(PlaylistSceneIfPlaylistsExist)));
+        menu.options.Add(new MenuOption("Settings", menu, () => Task.Run(SettingsScene)));
         menu.options.Add(new MenuOption("Exit", menu, () => Task.Run(() => Globals.Exit(0))));
         menu.options[menu.cursor].selected = true;
         PushMenu(menu);
+    }
+
+    private void SettingsScene()
+    {
+        childSceneOpen = true;
+        Globals.scenes.Push(new SettingsScene());
     }
 
     private void PlaylistSceneIfPlaylistsExist()
